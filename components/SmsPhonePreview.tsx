@@ -1,4 +1,4 @@
-// Live preview of the pitch as an SMS on the brand's phone. SMS only (no other channels).
+// Live preview of the pitch on the brand's phone, as an SMS or a WhatsApp message (whichever channel sends it).
 import { ChevronLeft } from "lucide-react";
 
 const LINK = /((?:https?:\/\/)?(?:www\.)?[\w-]+(?:\.[\w-]+)*\.(?:com|net|org|io|co|tv|me|app|dev|gg|link)(?:\/[^\s]*)?)/gi;
@@ -8,7 +8,7 @@ function withLinks(text: string) {
   return text.split(LINK).map((part, i) => (i % 2 === 1 ? <span key={i} className="text-accent underline">{part}</span> : part));
 }
 
-export function SmsPhonePreview({ fromName, message, caption }: { fromName: string; message: string; caption: string }) {
+export function SmsPhonePreview({ fromName, message, caption, channel = "sms" }: { fromName: string; message: string; caption: string; channel?: "sms" | "whatsapp" }) {
   const initials = fromName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
   const segments = Math.ceil(message.length / 160);
   return (
@@ -40,7 +40,7 @@ export function SmsPhonePreview({ fromName, message, caption }: { fromName: stri
             <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-xs font-semibold text-accent">{initials}</span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold">{fromName}</span>
-              <span className="block text-xs text-white/75">Text message · SMS</span>
+              <span className="block text-xs text-white/75">{channel === "whatsapp" ? "WhatsApp message" : "Text message · SMS"}</span>
             </span>
           </div>
         </div>
@@ -51,7 +51,7 @@ export function SmsPhonePreview({ fromName, message, caption }: { fromName: stri
           <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md bg-white px-3.5 py-2.5 text-[13px] leading-snug text-foreground">
             {message.trim() ? withLinks(message) : <span className="text-muted">Your message shows here.</span>}
           </div>
-          {message.trim() && <span className="ml-1 text-[11px] text-muted">{message.length} characters · {segments} SMS</span>}
+          {message.trim() && <span className="ml-1 text-[11px] text-muted">{message.length} characters{channel === "sms" ? ` · ${segments} SMS` : ""}</span>}
           <div className="mt-auto mx-auto h-1 w-28 rounded-full bg-foreground/80" aria-hidden />
         </div>
       </div>

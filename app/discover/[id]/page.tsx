@@ -97,11 +97,11 @@ export default function PitchPage() {
 
   const send = async () => {
     if (!company) return;
-    setBusy("Sending SMS"); setError(undefined);
+    setBusy("Sending"); setError(undefined);
     try {
       const r = await postApi<SendResult>("/api/send", { to, message, approved: true });
       recordPitch({ company, trust: verdict?.level, message, to });
-      logActivity({ kind: "pitch", title: `Pitched ${company.name}`, detail: "SMS sent", tone: "ok", href: "/" });
+      logActivity({ kind: "pitch", title: `Pitched ${company.name}`, detail: channel === "whatsapp" ? "Sent on WhatsApp" : "SMS sent", tone: "ok", href: "/" });
       setSent(r.data);
     } catch (e) {
       setError((e as Error).message);
@@ -139,7 +139,7 @@ export default function PitchPage() {
                 <Link href="/?view=history" className="btn-ghost">Open history</Link>
               </div>
               <p className="mt-4 text-xs text-muted">
-                {sent.provider === "mock" ? "Demo mode: no real SMS was sent." : `${sent.testMode ? "Test mode: sent" : "Sent"} to ${sent.to}${sent.channel === "whatsapp" ? " on WhatsApp" : " by SMS"}${sent.testMode ? ", not to the brand." : "."}`}
+                {sent.provider === "mock" ? "Demo mode: nothing was really sent." : `${sent.testMode ? "Test mode: sent" : "Sent"} to ${sent.to}${sent.channel === "whatsapp" ? " on WhatsApp" : " by SMS"}${sent.testMode ? ", not to the brand." : "."}`}
               </p>
             </div>
           ) : (
@@ -212,11 +212,11 @@ export default function PitchPage() {
               {step === 2 && (
                 <section>
                   <h2 className="text-2xl font-semibold tracking-tight">Message</h2>
-                  <p className="mt-1 text-sm text-muted">This is the SMS the brand gets. Keep it short and personal. The preview updates as you type.</p>
+                  <p className="mt-1 text-sm text-muted">This is the message the brand gets. Keep it short and personal. The preview updates as you type.</p>
                   <label className="label mt-6" htmlFor="msg">Your message</label>
                   <textarea id="msg" className="field min-h-44 leading-relaxed" value={message} onChange={(e) => { setMessage(e.target.value); setApproved(false); }} />
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                    <span className="hint">{message.length} characters · {Math.ceil(message.length / 160) || 0} SMS. Under 320 reads best.</span>
+                    <span className="hint">{message.length} characters{channel === "sms" ? ` · ${Math.ceil(message.length / 160) || 0} SMS` : ""}. Under 320 reads best.</span>
                     {suggested && message !== suggested && (
                       <button type="button" onClick={() => setMessage(suggested)} className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
                         <RotateCcw size={14} /> Use suggested message
@@ -230,7 +230,7 @@ export default function PitchPage() {
               {step === 3 && (
                 <section>
                   <h2 className="text-2xl font-semibold tracking-tight">Send</h2>
-                  <p className="mt-1 text-sm text-muted">Check the number and send it as an SMS. Nothing goes out until you press Send.</p>
+                  <p className="mt-1 text-sm text-muted">Check the number and send it {channel === "whatsapp" ? "on WhatsApp" : "as an SMS"}. Nothing goes out until you press Send.</p>
                   {testNumber && (
                     <div className="mt-4 rounded-lg bg-accent-soft p-3 text-sm text-accent">
                       <span className="font-medium">Test mode.</span> Every message goes only to <span className="font-medium">{testNumber}</span>{channel === "whatsapp" ? " on WhatsApp" : ""}, not to {company.name}.
@@ -263,7 +263,7 @@ export default function PitchPage() {
                     </div>
                     <div className="card p-4 text-sm">
                       <div className="flex justify-between gap-3"><span className="text-muted">To</span><span className="font-medium">{company.name} · {to || "no number yet"}</span></div>
-                      <div className="mt-2 flex justify-between gap-3"><span className="text-muted">Length</span><span>{message.length} characters · {Math.ceil(message.length / 160)} SMS</span></div>
+                      <div className="mt-2 flex justify-between gap-3"><span className="text-muted">Length</span><span>{message.length} characters{channel === "sms" ? ` · ${Math.ceil(message.length / 160)} SMS` : ""}</span></div>
                     </div>
                     <label className="flex items-center gap-2 text-sm">
                       <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
@@ -271,7 +271,7 @@ export default function PitchPage() {
                     </label>
                     {red && <div className="rounded-lg bg-bad-soft p-3 text-sm text-bad">Sending is turned off because this brand looks like a scam.</div>}
                     <button type="button" className="btn" disabled={!approved || (!to.trim() && !testNumber) || !message.trim() || red || !!busy} onClick={send}>
-                      <Send size={15} /> {busy === "Sending SMS" ? "Sending…" : channel === "whatsapp" ? "Send on WhatsApp" : "Send SMS"}
+                      <Send size={15} /> {busy === "Sending" ? "Sending…" : channel === "whatsapp" ? "Send on WhatsApp" : "Send SMS"}
                     </button>
                   </div>
                 </section>
@@ -301,7 +301,7 @@ export default function PitchPage() {
         </div>
 
         <aside className="min-w-0 lg:flex lg:min-h-0 lg:items-center lg:justify-center">
-          <SmsPhonePreview fromName={profile.name} message={message} caption={`How ${company.name} gets it`} />
+          <SmsPhonePreview channel={channel} fromName={profile.name} message={message} caption={`How ${company.name} gets it`} />
         </aside>
       </div>
     </div>
