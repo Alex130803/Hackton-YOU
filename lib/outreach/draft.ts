@@ -8,9 +8,12 @@ import type { Brief, Company, CreatorProfile, Draft } from "@/lib/types";
  */
 export function draftMessage(company: Company, brief: Brief, creator: CreatorProfile): Draft {
   const links = creator.links.slice(0, 2).join(" · ");
+  const hook = company.trigger.type === "other"
+    ? `I've been following ${company.name} and I think my audience would love what you make.`
+    : `Saw the news: ${company.trigger.summary} ${brief.creatorFit}`;
   const message =
-    `Hi ${company.name} team! Saw the news: ${company.trigger.summary} ` +
-    `${brief.creatorFit} I'd love to create content around it for my ${creator.niche} audience. ` +
+    `Hi ${company.name} team! ${hook} ` +
+    `I'd love to create content with you for my ${creator.niche} audience. ` +
     `My work: ${links || "(add your links)"}. Open to a quick chat this week?`;
   return {
     companyId: company.id,

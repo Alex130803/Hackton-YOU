@@ -14,7 +14,14 @@ export async function POST(req: Request) {
     await sleep(700);
     log.mock("extract", company.trigger.sourceUrl, 520);
     log.mock("research", "why now + creator fit (lite)", 1900);
-    const data = mockBriefs[company.id] ?? { companyId: company.id, whyNow: company.trigger.summary, creatorFit: "", sources: [{ title: "Trigger", url: company.trigger.sourceUrl }] };
+    const data: Brief = mockBriefs[company.id] ?? {
+      companyId: company.id,
+      whyNow: company.trigger.type === "other"
+        ? `You picked ${company.name} yourself. Once live research is on, recent launches, funding and hiring news show up here.`
+        : company.trigger.summary,
+      creatorFit: `Your ${niche ?? company.niche} audience could be a fit. Look at who ${company.name} sells to before you send.`,
+      sources: [{ title: `${company.name} website`, url: company.trigger.sourceUrl }],
+    };
     return NextResponse.json<ApiResult<Brief>>({ data, calls: log.calls });
   }
 

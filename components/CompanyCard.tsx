@@ -9,8 +9,8 @@ export const TRIGGER_LABEL: Record<Company["trigger"]["type"], string> = {
 };
 
 export function CompanyCard({
-  company, verdict, verdictLoading, selected, onSelect,
-}: { company: Company; verdict?: TrustVerdict; verdictLoading?: boolean; selected?: boolean; onSelect?: () => void }) {
+  company, verdict, verdictLoading, selected, onSelect, tag,
+}: { company: Company; verdict?: TrustVerdict; verdictLoading?: boolean; selected?: boolean; onSelect?: () => void; tag?: React.ReactNode }) {
   return (
     <button
       onClick={onSelect}
@@ -27,6 +27,7 @@ export function CompanyCard({
         <span className="font-medium text-accent">{TRIGGER_LABEL[company.trigger.type]}</span> · {company.trigger.date}
       </div>
       <p className="mt-1 line-clamp-2 text-sm text-foreground/80">{company.trigger.summary}</p>
+      {tag && <div className="mt-3 border-t border-line pt-2 text-xs text-muted">{tag}</div>}
     </button>
   );
 }

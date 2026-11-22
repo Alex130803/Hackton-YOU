@@ -15,7 +15,11 @@ export async function POST(req: Request) {
     await sleep(400);
     log.mock("search", `"${company.name}" scam reports`, 310);
     log.mock("search", `${company.domain} brand match`, 290);
-    const data = mockVerdicts[company.id] ?? { level: "yellow", score: 50, signals: [{ label: "No data", detail: "Mock has no verdict for this company" }] };
+    const data: TrustVerdict = mockVerdicts[company.id] ?? {
+      level: "yellow",
+      score: 50,
+      signals: [{ label: "Not much to go on yet", detail: "We found little about this company. Check their website and socials before you pitch." }],
+    };
     return NextResponse.json<ApiResult<TrustVerdict>>({ data, calls: log.calls });
   }
 
