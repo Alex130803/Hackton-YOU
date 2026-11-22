@@ -44,6 +44,8 @@ Each API route returns `{ data, calls }`. `calls` feeds the **EndpointTimeline**
 
 **Database (only if we need one):** SQLite as a file in this repo (e.g. `data/app.db`), committed to git, so we share data through push/pull and nothing else. Don't use a hosted DB. A `.db` file can't be merged, so only one person writes to it at a time (or rebuild it from a seed script). Mock mode must keep working without it. Right now there is no DB; the profile and activity live in the browser.
 
+**Design agent:** `.claude/agents/ultraviolet-design.md` holds the full design system (colors, components, icons, layout, motion, copy) as a Claude Code subagent. Ask Claude Code to "use the ultraviolet-design agent" when you build or review UI, so both halves look like one app.
+
 **Shared contract:** `lib/types.ts`. Change it together. Mocks live in `lib/mocks/` (all companies are fictional).
 
 ## TODO map
