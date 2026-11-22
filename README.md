@@ -9,7 +9,7 @@ Hackathon project on You.com APIs. React (Next.js App Router) on Node.js, white 
 
 No login or signup. This is a single-user demo. New users first go through a 3-step **onboarding** (`/onboarding`: name, niche, then channels with YouTube/Instagram/TikTok fields plus "Add another link"; there is also a "Skip for now" link). It ends on an "all set" screen with the blinking slime and a profile overview. Onboarding opens **every time the app is opened in a new window or tab** (flag in `sessionStorage`; a reload keeps it). Returning creators see their saved details already filled in. The profile is saved in the browser (`lib/profile.ts`) and can be edited in Settings. Settings → **Restart onboarding** resets it before a demo. The `components/AppShell.tsx` component handles the redirect.
 
-**Pitch deck:** [`pitch/Ultraviolet-pitch.pptx`](pitch/Ultraviolet-pitch.pptx) (10 slides: Maria's story, problem, solution, Find brands, Offer check, demo, metrics, pricing, thank you). Speaker notes are in the slides.
+**Pitch deck:** [`pitch/Ultraviolet-pitch.pptx`](pitch/Ultraviolet-pitch.pptx) (9 slides: Maria's story, problem, solution, Find brands, Offer check, metrics, pricing, thank you). Speaker notes are in the slides.
 
 ## Run
 
