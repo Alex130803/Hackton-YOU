@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useProfile, type Profile } from "@/lib/profile";
 
@@ -19,6 +20,7 @@ function Row({ name, ok, note }: { name: string; ok: boolean; note: string }) {
 
 export function SettingsForm({ status }: { status: Status }) {
   const { profile, save } = useProfile();
+  const router = useRouter();
   const [form, setForm] = useState<Profile>(profile);
   const [saved, setSaved] = useState(false);
   useEffect(() => setForm(profile), [profile]);
@@ -51,6 +53,12 @@ export function SettingsForm({ status }: { status: Status }) {
           <Row name={`SMS (${status.smsProvider})`} ok={status.sms} note="Sends approved messages" />
         </div>
         <p className="mt-3 hint">Keys go in <code>.env.local</code> on the server.</p>
+        <div className="mt-6 border-t border-line pt-4">
+          <button type="button" className="btn-ghost" onClick={() => { save({ ...profile, onboarded: false }); router.replace("/onboarding"); }}>
+            Restart onboarding
+          </button>
+          <p className="mt-1 hint">Handy before a demo.</p>
+        </div>
       </div>
     </div>
   );

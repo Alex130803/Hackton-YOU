@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { AppShell } from "@/components/AppShell";
 import { USE_MOCKS } from "@/lib/env";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -16,12 +16,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        <div className="flex min-h-screen">
-          <Sidebar demo={USE_MOCKS} />
-          <main className="min-w-0 flex-1 px-4 py-6 md:px-10 md:py-8">
-            <div className="mx-auto max-w-5xl">{children}</div>
-          </main>
-        </div>
+        <AppShell demo={USE_MOCKS}>{children}</AppShell>
       </body>
     </html>
   );
