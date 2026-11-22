@@ -151,7 +151,7 @@ export function Sidebar({ demo }: { demo: boolean }) {
   return (
     <aside
       data-wide={!collapsed}
-      className={`group/sb sticky top-2 my-2 ml-2 flex h-[calc(100vh-1rem)] w-[68px] shrink-0 flex-col overflow-hidden rounded-2xl border border-sidebar-line border-r-4 border-r-accent/75 bg-sidebar px-2 py-4 md:top-3 md:my-3 md:ml-3 md:h-[calc(100vh-1.5rem)] data-[wide=true]:md:w-[17rem] data-[wide=true]:md:px-3 ${
+      className={`group/sb sticky top-2 my-2 ml-2 flex h-[calc(100vh-1rem)] w-[68px] shrink-0 flex-col overflow-hidden rounded-2xl border border-sidebar-line bg-sidebar px-2 py-4 md:top-3 md:my-3 md:ml-3 md:h-[calc(100vh-1.5rem)] data-[wide=true]:md:w-[17rem] data-[wide=true]:md:px-3 ${
         animateWidth ? "transition-[width,padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none" : ""
       }`}
     >
