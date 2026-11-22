@@ -1,11 +1,11 @@
 # creator-outreach
 
-Hackathon project on You.com APIs. Two modes:
+Hackathon project on You.com APIs. React (Next.js App Router) on Node.js, white UI with a sidebar: **Home**, **Find brands**, **Offer check**, plus **Settings** and the account button at the bottom.
 
-- **Outbound** (`/`): a creator enters their niche and links. We find companies with a fresh trigger (launch, funding, marketing hire), run a trust check (green/yellow/red with sources), build a cited brief and draft a pitch. The creator approves it and it goes out by SMS.
-- **Deal Check** (`/inbound`): the creator pastes a brand-deal email or DM and finds out whether it's real (sender vs. brand, domain age, scam reports), what the links contain (opened server-side, so the creator never clicks), whether the rate is fair, and what to reply.
+- **Find brands** (`/discover`): a creator enters their niche and links. We find companies with a fresh trigger (launch, funding, marketing hire), run a trust check (green/yellow/red with sources), build a cited brief and draft a pitch. The creator approves it and it goes out by SMS.
+- **Offer check** (`/check`, API `/api/inbound`): the creator pastes a brand-deal email or DM and finds out whether it's real (sender vs. brand, domain age, scam reports), what the links contain (opened server-side, so the creator never clicks), whether the rate is fair, and what to reply.
 
-No login or signup. This is a single-user demo.
+No login or signup. This is a single-user demo. The profile (name, niche, links, phone) lives in Settings and is saved in the browser (`lib/profile.ts`).
 
 ## Run
 
@@ -32,11 +32,13 @@ Each API route returns `{ data, calls }`. `calls` feeds the **EndpointTimeline**
 
 ## Who owns what
 
-| Person A: outbound | Person B: trust / Deal Check |
+| Person A: Find brands | Person B: trust / Offer check |
 | --- | --- |
-| `app/page.tsx` (dashboard UI), `components/*` | `lib/trust/*` (`signals.ts`, `score.ts`, `rdap.ts`) |
+| `app/page.tsx` (Home), `app/discover/page.tsx`, `app/settings/*`, `components/*` | `lib/trust/*` (`signals.ts`, `score.ts`, `rdap.ts`) |
 | `app/api/discover`, `app/api/brief`, `app/api/draft`, `app/api/send` | `app/api/trust`, `app/api/inbound` |
-| `lib/you/*`, `lib/outreach/draft.ts`, `lib/sms/*` | `app/inbound/page.tsx` |
+| `lib/you/*`, `lib/outreach/draft.ts`, `lib/sms/*` | `app/check/page.tsx` (Offer check UI) |
+
+**Design:** white background, black text and inputs, purple (`--accent`) as the only accent color. Tokens live in `app/globals.css`, and the `.card`, `.btn`, `.btn-ghost`, `.field` and `.label` classes are there too. Icons come from `lucide-react`, plain (no tinted tiles).
 
 **Shared contract:** `lib/types.ts`. Change it together. Mocks live in `lib/mocks/` (all companies are fictional).
 

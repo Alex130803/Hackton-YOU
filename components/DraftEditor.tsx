@@ -1,28 +1,33 @@
 "use client";
 import { useState } from "react";
+import { Send, Check } from "lucide-react";
 
 export function DraftEditor({
-  value, onChange, onSend, sending, sentId, disabled,
-}: { value: string; onChange: (v: string) => void; onSend: (to: string) => void; sending?: boolean; sentId?: string; disabled?: boolean }) {
-  const [to, setTo] = useState("+15005550006");
+  value, onChange, onSend, defaultTo, sending, sentId, disabled,
+}: { value: string; onChange: (v: string) => void; onSend: (to: string) => void; defaultTo: string; sending?: boolean; sentId?: string; disabled?: boolean }) {
+  const [to, setTo] = useState(defaultTo);
   const [approved, setApproved] = useState(false);
   return (
     <div className="space-y-3">
-      <textarea className="field min-h-40 font-mono text-sm leading-relaxed" value={value} onChange={(e) => { onChange(e.target.value); setApproved(false); }} />
-      <div className="flex items-center justify-between font-mono text-[11px] text-muted">
-        <span>{value.length} chars · {Math.ceil(value.length / 160) || 0} SMS segment(s)</span>
+      <div>
+        <label className="label">Message</label>
+        <textarea className="field min-h-36 leading-relaxed" value={value} onChange={(e) => { onChange(e.target.value); setApproved(false); }} />
+        <div className="mt-1 hint">{value.length} characters · {Math.ceil(value.length / 160) || 0} SMS</div>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <input className="field max-w-48 font-mono text-sm" value={to} onChange={(e) => setTo(e.target.value)} placeholder="+1…" />
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} className="accent-[var(--accent)]" />
-          I reviewed this message
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="label">Send to</label>
+          <input className="field w-48" value={to} onChange={(e) => setTo(e.target.value)} placeholder="+1…" />
+        </div>
+        <label className="flex h-[38px] items-center gap-2 text-sm">
+          <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
+          Looks good, send it
         </label>
-        <button className="glow-btn px-4 py-2 text-sm" disabled={!approved || sending || disabled || !value} onClick={() => onSend(to)}>
-          {sending ? "Sending…" : "Approve & send SMS"}
+        <button className="btn ml-auto" disabled={!approved || sending || disabled || !value} onClick={() => onSend(to)}>
+          <Send size={15} /> {sending ? "Sending…" : "Send SMS"}
         </button>
       </div>
-      {sentId && <div className="font-mono text-xs text-ok">✓ Sent · {sentId}</div>}
+      {sentId && <div className="flex items-center gap-2 text-sm text-ok"><Check size={16} /> Sent ({sentId})</div>}
     </div>
   );
 }

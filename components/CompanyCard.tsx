@@ -1,11 +1,11 @@
 import type { Company, TrustVerdict } from "@/lib/types";
 import { TrustBadge } from "./TrustBadge";
 
-const TRIGGER_LABEL: Record<Company["trigger"]["type"], string> = {
-  launch: "🚀 Launch",
-  funding: "💸 Funding",
-  marketing_hire: "📣 Marketing hire",
-  other: "✨ Signal",
+export const TRIGGER_LABEL: Record<Company["trigger"]["type"], string> = {
+  launch: "New launch",
+  funding: "Just raised",
+  marketing_hire: "Hiring marketing",
+  other: "In the news",
 };
 
 export function CompanyCard({
@@ -14,27 +14,19 @@ export function CompanyCard({
   return (
     <button
       onClick={onSelect}
-      className={`panel w-full p-4 text-left transition hover:border-accent/50 ${selected ? "border-accent! shadow-[0_0_30px_rgba(94,231,255,0.15)]" : ""}`}
+      className={`card w-full p-4 text-left transition hover:border-foreground/40 ${selected ? "border-accent! ring-2 ring-accent-soft" : ""}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-semibold">{company.name}</div>
-          <div className="font-mono text-xs text-muted">{company.domain}</div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate font-medium">{company.name}</div>
+          <div className="truncate text-xs text-muted">{company.domain}</div>
         </div>
         <TrustBadge verdict={verdict} loading={verdictLoading} />
       </div>
-      <div className="mt-3 flex items-center gap-2 text-xs">
-        <span className="rounded-md border border-accent-2/30 bg-accent-2/10 px-1.5 py-0.5 text-accent-2">{TRIGGER_LABEL[company.trigger.type]}</span>
-        <span className="font-mono text-muted">{company.trigger.date}</span>
+      <div className="mt-3 text-xs text-muted">
+        <span className="font-medium text-accent">{TRIGGER_LABEL[company.trigger.type]}</span> · {company.trigger.date}
       </div>
-      <p className="mt-2 text-sm text-foreground/80">{company.trigger.summary}</p>
-      {verdict && verdict.level !== "green" && (
-        <ul className="mt-3 space-y-1 border-t border-line pt-2 text-xs text-muted">
-          {verdict.signals.slice(0, 3).map((s) => (
-            <li key={s.label}>• <span className="text-foreground/80">{s.label}:</span> {s.detail}</li>
-          ))}
-        </ul>
-      )}
+      <p className="mt-1 line-clamp-2 text-sm text-foreground/80">{company.trigger.summary}</p>
     </button>
   );
 }

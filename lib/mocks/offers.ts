@@ -11,7 +11,7 @@ export interface MockOffer {
 export const mockOffers: MockOffer[] = [
   {
     id: "scam_brief_link",
-    title: "Scam: fake brief link (account hijack)",
+    title: "Fake brief link",
     text: `Hi! I'm Daniel from the partnerships team at Sonora Audio 🎧 We love your content and want to offer a paid collab: $2,400 for 1 YouTube integration. Please review the campaign brief and sign in to confirm your channel: https://sonora-audio-campaign.example/brief
 Reply within 24h, spots are limited!
 — Daniel, sonora.partnerships.team@gmail.example`,
@@ -38,7 +38,7 @@ Reply within 24h, spots are limited!
   },
   {
     id: "scam_upfront_fee",
-    title: "Scam: pay-to-join ambassador program",
+    title: "Pay-to-join program",
     text: `Congratulations!! You've been selected as a GlowDrop Skincare ambassador 💖 Get 50% commission + free products. To activate, just cover the $39.99 shipping for your starter kit at glowdrop-official.example/activate. DM us on Telegram @glowdrop_collab`,
     result: {
       verdict: {
@@ -58,7 +58,7 @@ Reply within 24h, spots are limited!
   },
   {
     id: "legit_lowball",
-    title: "Real, but lowball + bad terms",
+    title: "Real but underpaid",
     text: `Hi, this is Ana from TrailPeak Gear (ana@trailpeak.example). We'd love a 60s Instagram Reel for our UltraLite 2 launch. Budget is $150 + the backpack. Contract attached: https://trailpeak.example/contracts/ul2-creator.pdf`,
     result: {
       verdict: {
