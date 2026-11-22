@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Link2, CircleAlert, ArrowLeft, ArrowRight, RotateCw } from "lucide-react";
 import { postApi } from "@/lib/api";
+import { loadBrief } from "@/lib/briefPrefetch";
 import { profileLinks, useProfile } from "@/lib/profile";
 import { logActivity, timeAgo } from "@/lib/activity";
 import { toDomain } from "@/lib/domain";
@@ -324,7 +325,7 @@ export default function Discover() {
               const tag = p?.status === "draft" ? <>Draft saved {timeAgo(p.updatedAt)} · <span className="font-medium text-accent">Continue</span></>
                 : p ? <>Pitched {timeAgo(p.sentAt)} · <span className="font-medium text-foreground">{PITCH_STATUS[p.status].label}</span></>
                 : addedIds.has(c.id) ? "Added by you" : undefined;
-              return <CompanyCard key={c.id} company={c} verdict={verdicts[c.id]} verdictLoading={!verdicts[c.id]} onSelect={() => open(c)} tag={tag} />;
+              return <CompanyCard key={c.id} company={c} verdict={verdicts[c.id]} verdictLoading={!verdicts[c.id]} onSelect={() => open(c)} onIntent={() => loadBrief(c, profile.niche, profileLinks(profile)).catch(() => {})} tag={tag} />;
             })}
           </div>
           {!loadingList && all.length === 0 && (

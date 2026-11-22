@@ -53,12 +53,14 @@ export function CompanyCover({ company, className = "" }: { company: Company; cl
 }
 
 export function CompanyCard({
-  company, verdict, verdictLoading, selected, onSelect, tag,
-}: { company: Company; verdict?: TrustVerdict; verdictLoading?: boolean; selected?: boolean; onSelect?: () => void; tag?: React.ReactNode }) {
+  company, verdict, verdictLoading, selected, onSelect, onIntent, tag,
+}: { company: Company; verdict?: TrustVerdict; verdictLoading?: boolean; selected?: boolean; onSelect?: () => void; onIntent?: () => void; tag?: React.ReactNode }) {
   return (
     <div className="relative">
     <button
       onClick={onSelect}
+      onMouseEnter={onIntent}
+      onFocus={onIntent}
       className={`card group flex h-full w-full flex-col overflow-hidden text-left transition hover:border-foreground/40 ${selected ? "border-accent! ring-2 ring-accent-soft" : ""}`}
     >
       <div className="relative">

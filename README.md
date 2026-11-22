@@ -36,7 +36,7 @@ Restart `npm run dev` after changing env vars. What runs live then:
 | --- | --- |
 | Find brands (suggestions and topic search) | Research API, `research_effort: "lite"`, answering in JSON (~5s; structured `output_schema` with `standard` is the fallback). Then one Web Search per brand for a cover photo (`lib/live/images.ts`: the brand's own photos first, logos/badges/Wikipedia skipped). Logo from `you.com/favicon?domain=…`. Results are cached in SQLite (6h), so a repeat search takes ~0.2s |
 | Pasted company website | Extract (name) + Web Search (latest news from the last 60 days → trigger + image) |
-| Why it fits (brief) | Research API with `output_schema`: why_now / why_you + sources, **plus the brand's public phone/email with the page it was found on, and a short SMS body** (one call, ~20–30s) |
+| Why it fits (brief) | Research API, `lite`, answering in JSON (~4s; structured `standard` is the fallback): why_now / why_you + sources, **plus the brand's public phone/email with the page it was found on, and a short message body**. Starts when you hover a card and runs next to the trust check; cached in SQLite for 24h |
 | More suggestions | "New brands" asks Research again with `exclude` (domains already shown), so every page is new. The next page is fetched in the background, so it opens instantly |
 | Trust check for brands | RDAP domain age + Web Search for independent coverage and scam reports (`lib/trust/signals.ts`). Cached per domain for 24h |
 | Offer check | Local red-flag heuristics only. Extract of links, fair rate and Finance Research are still TODO (Person B) |

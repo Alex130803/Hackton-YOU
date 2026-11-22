@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, CircleAlert, ExternalLink, Globe, Mail, RotateCcw, Send } from "lucide-react";
 import { postApi } from "@/lib/api";
+import { loadBrief } from "@/lib/briefPrefetch";
 import { profileLinks, useProfile } from "@/lib/profile";
 import { logActivity } from "@/lib/activity";
 import { recallCompany, rememberCompany } from "@/lib/companyStore";
@@ -63,6 +64,8 @@ export default function PitchPage() {
 
     (async () => {
       try {
+        // Start "Why it fits" right away (it may already be running from a hover on the card), next to the trust check.
+        const briefJob = loadBrief(c, profile.niche, profileLinks(profile));
         let v = hit.verdict;
         if (!v) {
           setBusy("Checking the brand");
@@ -71,7 +74,7 @@ export default function PitchPage() {
         }
         setVerdict(v);
         setBusy("Researching the brand");
-        const b = await postApi<Brief>("/api/brief", { company: c, niche: profile.niche, links: profileLinks(profile) });
+        const b = await briefJob;
         log(b.calls); setBrief(b.data);
         // The brand's public number, found on the web by research (only if the creator hasn't typed one).
         if (b.data.contact?.phone) setTo((cur) => cur || b.data.contact!.phone!);

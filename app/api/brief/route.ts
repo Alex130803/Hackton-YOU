@@ -1,8 +1,11 @@
-// OWNER: Person A — Company -> Brief with cited sources (live: You.com Research with structured output)
+// OWNER: Person A — Company -> Brief with cited sources (live: You.com Research)
+// Speed: "lite" research answering in JSON (~5s); structured "standard" (~20-30s) only when lite's answer can't be used.
+// Cached in SQLite for 24h per brand + creator, so opening the same brand again is instant.
 import { NextResponse } from "next/server";
 import { USE_MOCKS, sleep } from "@/lib/env";
 import { CallLog } from "@/lib/you/client";
-import { researchStructured } from "@/lib/you/research";
+import { research, researchStructured } from "@/lib/you/research";
+import { getCached, setCached, HOUR } from "@/lib/cache";
 import { mockBriefs } from "@/lib/mocks";
 import type { ApiResult, Brief, Company } from "@/lib/types";
 
@@ -33,6 +36,20 @@ function cleanPhone(p: string | null): string | null {
 
 interface Out { why_now: string; why_you: string; phone: string | null; email: string | null; contact_source_url: string | null; sms_message: string }
 
+/** Pull the JSON object out of lite research's answer; null if a required field is missing. */
+function parseOut(text: string): Out | null {
+  const a = text.indexOf("{"), b = text.lastIndexOf("}");
+  if (a < 0 || b <= a) return null;
+  try {
+    const o = JSON.parse(text.slice(a, b + 1)) as Partial<Out>;
+    if (!o.why_now || !o.why_you || !o.sms_message) return null;
+    const str = (v: unknown) => (typeof v === "string" && v.trim() && v !== "null" ? v.trim() : null);
+    return { why_now: o.why_now, why_you: o.why_you, sms_message: o.sms_message, phone: str(o.phone), email: str(o.email), contact_source_url: str(o.contact_source_url) };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   const { company, niche, links = [] } = (await req.json()) as { company: Company; niche?: string; links?: string[] };
   const log = new CallLog();
@@ -53,21 +70,39 @@ export async function POST(req: Request) {
     return NextResponse.json<ApiResult<Brief>>({ data, calls: log.calls });
   }
 
+  const key = `brief:${company.domain}:${creatorNiche.trim().toLowerCase()}:${links.join(",")}`;
+  const hit = getCached<Brief>(key, 24 * HOUR);
+  if (hit) return NextResponse.json<ApiResult<Brief>>({ data: { ...hit, companyId: company.id }, calls: log.calls });
+
   try {
-    const { content, sources } = await log.track("research", `why now + fit for ${company.name}`, () =>
-      researchStructured<Out>(
-        `A content creator in the niche "${creatorNiche}" (channels: ${links.join(", ") || "not given"}) wants to pitch ${company.name} (${company.domain}) for a paid collaboration. ` +
-          `Recent news: ${company.trigger.summary} (${company.trigger.sourceUrl}). ` +
-          `Write two short, plain-English paragraphs, 2 sentences each, using only facts you can source: ` +
-          `"why_now": why this is a good moment to reach out (recent launch, funding, campaigns, hiring); ` +
-          `"why_you": why a ${creatorNiche} creator's audience fits ${company.name}'s customers and products. ` +
-          `"phone": the public phone number ${company.name} lists for partnerships, press, marketing or, if none, general business contact, exactly as published on their official website or an official listing (null if you can't find one; never guess). ` +
-          `"email": the matching public email for partnerships or press (null if none). "contact_source_url": the page where you found them (null if none). ` +
-          `"sms_message": a short SMS from the creator to ${company.name}, first person, max 230 characters, 2-3 plain sentences: mention the specific recent news, ` +
-          `say in concrete words what the creator would make and why their audience fits, and ask for a quick chat. No greeting, no links, no hashtags, no emojis, no sign-off.`,
-        SCHEMA,
-      ),
-    );
+    const ask =
+      `A content creator in the niche "${creatorNiche}" (channels: ${links.join(", ") || "not given"}) wants to pitch ${company.name} (${company.domain}) for a paid collaboration. ` +
+      `Recent news: ${company.trigger.summary} (${company.trigger.sourceUrl}). ` +
+      `Write two short, plain-English paragraphs, 2 sentences each, using only facts you can source: ` +
+      `"why_now": why this is a good moment to reach out (recent launch, funding, campaigns, hiring); ` +
+      `"why_you": why a ${creatorNiche} creator's audience fits ${company.name}'s customers and products. ` +
+      `"phone": the public phone number ${company.name} lists for partnerships, press, marketing or, if none, general business contact, exactly as published on their official website or an official listing (null if you can't find one; never guess). ` +
+      `"email": the matching public email for partnerships or press (null if none). "contact_source_url": the page where you found them (null if none). ` +
+      `"sms_message": a short SMS from the creator to ${company.name}, first person, max 230 characters, 2-3 plain sentences: mention the specific recent news, ` +
+      `say in concrete words what the creator would make and why their audience fits, and ask for a quick chat. No greeting, no links, no hashtags, no emojis, no sign-off.`;
+
+    // Fast path: lite research, told to answer with one bare JSON object.
+    let content: Out | null = null;
+    let sources: { url: string; title?: string }[] = [];
+    try {
+      const r = await log.track("research", `why now + fit for ${company.name} (lite)`, () =>
+        research(`${ask} Answer ONLY with one JSON object, no prose and no citations: {"why_now":"","why_you":"","phone":null,"email":null,"contact_source_url":null,"sms_message":""}`, "lite"),
+      );
+      content = parseOut(r.output.content);
+      sources = r.output.sources ?? [];
+    } catch { /* fall through to structured */ }
+    // Fallback: structured output (slower, always valid JSON).
+    if (!content) {
+      const r = await log.track("research", `why now + fit for ${company.name} (structured)`, () => researchStructured<Out>(ask, SCHEMA));
+      content = r.content;
+      sources = r.sources;
+    }
+
     const data: Brief = {
       companyId: company.id,
       whyNow: clean(content.why_now),
@@ -79,6 +114,7 @@ export async function POST(req: Request) {
         ...sources.slice(0, 4).map((s) => ({ title: s.title || s.url, url: s.url })),
       ].filter((s, i, a) => a.findIndex((x) => x.url === s.url) === i),
     };
+    setCached(key, data);
     return NextResponse.json<ApiResult<Brief>>({ data, calls: log.calls });
   } catch (e) {
     return NextResponse.json({ error: `Research didn't finish (${(e as Error).message.slice(0, 120)}). Try again.` }, { status: 502 });
