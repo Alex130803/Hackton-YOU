@@ -1,0 +1,28 @@
+/* Phone demo: iOS-style animations for the simulated iPhone (screenshot flash, taps, upload, verdict sign). */
+
+.flash { animation: flash 420ms ease-out forwards; }
+@keyframes flash { 0% { opacity: 0; } 18% { opacity: 0.95; } 100% { opacity: 0; } }
+
+.tap { animation: tap 520ms ease-out forwards; }
+@keyframes tap {
+  0% { transform: translate(-50%, -50%) scale(0.55); opacity: 0.75; }
+  60% { transform: translate(-50%, -50%) scale(1); opacity: 0.45; }
+  100% { transform: translate(-50%, -50%) scale(1.15); opacity: 0; }
+}
+
+.spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.rise { animation: rise 320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.pulse { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* Verdict sign: pops in, then glows */
+.sign { animation: pop 520ms cubic-bezier(0.2, 0.9, 0.25, 1.25) both, glow 1.8s ease-in-out 520ms infinite; }
+@keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 10px var(--glow)) drop-shadow(0 0 24px var(--glow)); }
+  50% { filter: drop-shadow(0 0 22px var(--glow)) drop-shadow(0 0 48px var(--glow)); }
+}
