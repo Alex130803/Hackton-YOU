@@ -42,6 +42,8 @@ Each API route returns `{ data, calls }`. `calls` feeds the **EndpointTimeline**
 
 **Design:** white background, black text and inputs, purple (`--accent`) as the only accent color. Tokens live in `app/globals.css`, and the `.card`, `.btn`, `.btn-ghost`, `.field` and `.label` classes are there too. Icons come from `lucide-react`, plain (no tinted tiles).
 
+**Database (only if we need one):** SQLite as a file in this repo (e.g. `data/app.db`), committed to git, so we share data through push/pull and nothing else. Don't use a hosted DB. A `.db` file can't be merged, so only one person writes to it at a time (or rebuild it from a seed script). Mock mode must keep working without it. Right now there is no DB; the profile and activity live in the browser.
+
 **Shared contract:** `lib/types.ts`. Change it together. Mocks live in `lib/mocks/` (all companies are fictional).
 
 ## TODO map
