@@ -26,3 +26,8 @@
   0%, 100% { filter: drop-shadow(0 0 10px var(--glow)) drop-shadow(0 0 24px var(--glow)); }
   50% { filter: drop-shadow(0 0 22px var(--glow)) drop-shadow(0 0 48px var(--glow)); }
 }
+
+/* Safe meter: bar grows from the left after the slime pops in */
+.fill { transform-origin: left center; animation: fill 900ms cubic-bezier(0.22, 1, 0.36, 1) 350ms both; }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .fill { animation: none; } }

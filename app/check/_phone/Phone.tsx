@@ -11,6 +11,7 @@ import { postApi } from "@/lib/api";
 import { logActivity } from "@/lib/activity";
 import { screenshotFollowups, screenshotSamples, screenshotText, screenshotUrl, type ScreenshotSample } from "@/lib/mocks/screenshots";
 import type { DealCheck, EndpointCall, TrustLevel } from "@/lib/types";
+import { Slime } from "@/components/Slime";
 import { MailScreen } from "./MailScreen";
 import css from "./phone.module.css";
 
@@ -62,10 +63,10 @@ const FILLERS = [
 const SHORT_DATE: Record<string, string> = { "hollyland-first": "7/10/26", "hollyland-followup": "7/11/26", "creoventura-andaseat": "9/21/26" };
 
 const ENDPOINT: Record<EndpointCall["endpoint"], string> = { search: "Search", news: "News", extract: "Extract", research: "Research", finance_research: "Finance Research" };
-const VERDICT: Record<TrustLevel, { title: string; glow: string; todo: string }> = {
-  red: { title: "Don't reply", glow: "rgba(239, 35, 60, 0.75)", todo: "What to do" },
-  yellow: { title: "Check first", glow: "rgba(245, 158, 11, 0.75)", todo: "Suggested reply" },
-  green: { title: "Looks real", glow: "rgba(22, 163, 74, 0.7)", todo: "Suggested reply" },
+const VERDICT: Record<TrustLevel, { title: string; glow: string; color: string; todo: string }> = {
+  red: { title: "Don't reply", glow: "rgba(239, 35, 60, 0.55)", color: "#e5172f", todo: "What to do" },
+  yellow: { title: "Check first", glow: "rgba(245, 158, 11, 0.55)", color: "#d97706", todo: "Suggested reply" },
+  green: { title: "Looks real", glow: "rgba(22, 163, 74, 0.5)", color: "#16a34a", todo: "Suggested reply" },
 };
 
 type ShotState = "hidden" | "full" | "thumb" | "editor";
@@ -450,13 +451,14 @@ function Verdict({ result }: { result: DealCheck }) {
   const v = VERDICT[result.verdict.level];
   const reasons = result.verdict.signals.slice(0, 3).map((s) => s.label).join(" · ");
   return (
-    <div className="flex flex-col items-center pt-10 text-center">
+    <div className="flex flex-col items-center pt-8 text-center">
       <div className={css.sign} style={{ "--glow": v.glow } as CSSProperties}>
-        <Sign level={result.verdict.level} />
+        <Slime size={150} blink />
       </div>
-      <div className={`mt-7 text-[32px] font-bold tracking-tight ${css.rise}`}>{v.title}</div>
-      <div className={`mt-2 text-[16px] text-[#6b6b70] ${css.rise}`}>{reasons}</div>
-      <div className={`mt-10 w-full rounded-[16px] bg-[#f2f2f7] px-4 py-3.5 text-left ${css.rise}`}>
+      <div className={`mt-5 text-[32px] font-bold tracking-tight ${css.rise}`}>{v.title}</div>
+      <div className={`mt-1 text-[16px] text-[#6b6b70] ${css.rise}`}>{reasons}</div>
+      <SafeMeter score={result.verdict.score} color={v.color} />
+      <div className={`mt-6 w-full rounded-[16px] bg-[#f2f2f7] px-4 py-3.5 text-left ${css.rise}`}>
         <div className="text-[12px] font-semibold uppercase tracking-wide text-[#8e8e93]">{v.todo}</div>
         <div className="mt-1 text-[16px] leading-snug">{result.suggestedReply}</div>
       </div>
@@ -464,29 +466,32 @@ function Verdict({ result }: { result: DealCheck }) {
   );
 }
 
-function Sign({ level }: { level: TrustLevel }) {
-  if (level === "red")
-    return (
-      <svg width="150" height="150" viewBox="0 0 120 120" aria-label="Stop">
-        <polygon points="35,3 85,3 117,35 117,85 85,117 35,117 3,85 3,35" fill="#fff" />
-        <polygon points="37,8 83,8 112,37 112,83 83,112 37,112 8,83 8,37" fill="#e5172f" />
-        <text x="60" y="71" textAnchor="middle" fill="#fff" fontSize="30" fontWeight="800" fontFamily="-apple-system, Helvetica, Arial, sans-serif" letterSpacing="1">STOP</text>
-      </svg>
-    );
-  if (level === "yellow")
-    return (
-      <svg width="150" height="135" viewBox="0 0 120 108" aria-label="Caution">
-        <path d="M60 4 L116 102 H4 Z" fill="#fff" />
-        <path d="M60 14 L107 96 H13 Z" fill="#f59e0b" />
-        <text x="60" y="86" textAnchor="middle" fill="#fff" fontSize="52" fontWeight="800" fontFamily="-apple-system, Helvetica, Arial, sans-serif">!</text>
-      </svg>
-    );
+/** How safe the offer looks, 0-100%: the number counts up while the bar fills. */
+function SafeMeter({ score, color }: { score: number; color: string }) {
+  const target = Math.round(Math.max(0, Math.min(100, score)));
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const t0 = performance.now() + 350;
+    const tick = (now: number) => {
+      const k = Math.min(1, Math.max(0, (now - t0) / 900));
+      setN(Math.round(target * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
   return (
-    <svg width="140" height="140" viewBox="0 0 120 120" aria-label="Looks real">
-      <circle cx="60" cy="60" r="57" fill="#fff" />
-      <circle cx="60" cy="60" r="51" fill="#16a34a" />
-      <path d="M36 62 L53 78 L85 44" fill="none" stroke="#fff" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div className={`mt-6 w-full ${css.rise}`} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={target} aria-label="How safe this offer looks">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[13px] font-semibold uppercase tracking-wide text-[#8e8e93]">Safe</span>
+        <span className="text-[28px] font-bold tabular-nums leading-none" style={{ color }}>{n}%</span>
+      </div>
+      <div className="mt-2.5 h-3 w-full overflow-hidden rounded-full bg-[#ececf1]">
+        <div className={`h-full rounded-full ${css.fill}`} style={{ width: `${target}%`, background: color }} />
+      </div>
+      <div className="mt-1.5 flex justify-between text-[12px] text-[#8e8e93]"><span>0%</span><span>100%</span></div>
+    </div>
   );
 }
 
