@@ -2,7 +2,7 @@
 
 _(repo folder: `creator-outreach`)_
 
-Hackathon project on You.com APIs. React (Next.js App Router) on Node.js, white UI with a sidebar: **Home**, **Find brands**, **Offer check**, a **Recent** list and a **This week** card (from `lib/activity.ts`), plus **Settings** and the account button at the bottom. The mascot is a little purple slime (`components/Slime.tsx`, with `blink` and `bob` props).
+Hackathon project on You.com APIs. React (Next.js App Router) on Node.js, white UI with a sidebar: **Home**, **Find brands**, **Offer check**, a **Recent** list and a **This week** card (from `lib/activity.ts`), plus **Settings** and the account button at the bottom. On desktop the sidebar can be collapsed to an icon bar (button next to the logo, or Ctrl/⌘ B); the choice is remembered. The mascot is a little purple slime (`components/Slime.tsx`, with `blink` and `bob` props).
 
 - **Find brands** (`/discover`): a creator enters their niche and links. We find companies with a fresh trigger (launch, funding, marketing hire), run a trust check (green/yellow/red with sources), build a cited brief and draft a pitch. The creator approves it and it goes out by SMS.
 - **Offer check** (`/check`, API `/api/inbound`): the creator pastes a brand-deal email or DM and finds out whether it's real (sender vs. brand, domain age, scam reports), what the links contain (opened server-side, so the creator never clicks), whether the rate is fair, and what to reply.
