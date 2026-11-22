@@ -62,7 +62,7 @@ export default function PitchPage() {
         }
         setVerdict(v);
         setBusy("Researching the brand");
-        const b = await postApi<Brief>("/api/brief", { company: c, niche: profile.niche });
+        const b = await postApi<Brief>("/api/brief", { company: c, niche: profile.niche, links: profileLinks(profile) });
         log(b.calls); setBrief(b.data);
         const d = await postApi<Draft>("/api/draft", { company: c, brief: b.data, creator: { niche: profile.niche, links: profileLinks(profile) } });
         setSuggested(d.data.message);
