@@ -1,5 +1,5 @@
 /**
- * "+1 (585) 333-4208", "877.432.6637", "00387 61 234 567" -> E.164 ("+15853334208", "+18774326637", "+38761234567").
+ * "+1 (555) 010-1234", "877.432.6637", "00387 61 234 567" -> E.164 ("+15550101234", "+18774326637", "+38761234567").
  * 10-digit numbers without a country code are read as US/Canada (that's how US brands list them).
  * Returns null when we can't be sure, so the UI can ask for the country code instead of texting a wrong number.
  */

@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
   const test = testNumber();
   const number = test ?? toE164(to ?? "");
-  if (!number) return NextResponse.json({ error: "Add the country code to the number, e.g. +387 61 234 567 or +1 585 333 4208." }, { status: 400 });
+  if (!number) return NextResponse.json({ error: "Add the country code to the number, e.g. +387 61 234 567 or +1 555 010 1234." }, { status: 400 });
 
   try {
     const data = await getSmsProvider().send(number, message);
