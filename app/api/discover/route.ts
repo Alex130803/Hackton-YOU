@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     return NextResponse.json<ApiResult<Company[]>>({ data, calls: log.calls });
   }
 
-  const key = `discover:${niche.trim().toLowerCase()}:${[...exclude].sort().join(",")}`;
+  const key = `discover2:${niche.trim().toLowerCase()}:${[...exclude].sort().join(",")}`;
   if (!fresh) {
     const hit = getCached<Company[]>(key, 6 * HOUR);
     if (hit) return NextResponse.json<ApiResult<Company[]>>({ data: hit, calls: log.calls });
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const ask =
-      `Find 6 real brands in the niche "${niche}" that in the last 60 days (today is ${today}) launched a new product, raised funding, ` +
+      `Find 8 real brands in the niche "${niche}" that in the last 60 days (today is ${today}) launched a new product, raised funding, ` +
       `or posted a job for influencer or creator marketing. They should be brands a content creator could pitch for a paid collaboration. ` +
       `For each give the brand's own official website domain (not a news site or marketplace), the trigger type, one plain sentence about what happened, ` +
       `the URL of the article or page that reports it, and the date (YYYY-MM-DD).` +
@@ -120,10 +120,10 @@ export async function POST(req: Request) {
         return true;
       });
 
-    const data: Company[] = await Promise.all(
+    let data: Company[] = await Promise.all(
       found.map(async (f) => {
-        // Never let a slow image search hold up the list: after 2.5s the card just uses the logo fallback.
-        const { imageUrl } = await Promise.race([coverFor(f.name, f.domain, f.source_url, log), sleep(2500).then(() => ({ imageUrl: undefined }))]);
+        // Never let a slow image lookup hold up the list: after 4s the brand counts as having no photo.
+        const { imageUrl } = await Promise.race([coverFor(f.name, f.domain, f.source_url, log), sleep(4000).then(() => ({ imageUrl: undefined }))]);
         return {
           id: `live_${f.domain}`,
           name: f.name,
@@ -136,6 +136,9 @@ export async function POST(req: Request) {
         };
       }),
     );
+    // Show brands with a real photo; brands with only a logo are dropped, unless that would leave fewer than 3.
+    const withPhoto = data.filter((c) => c.imageUrl);
+    if (withPhoto.length >= 3) data = withPhoto;
     if (data.length) setCached(key, data);
     return NextResponse.json<ApiResult<Company[]>>({ data, calls: log.calls });
   } catch (e) {

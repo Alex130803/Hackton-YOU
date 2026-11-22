@@ -4,7 +4,7 @@ import { USE_MOCKS, sleep } from "@/lib/env";
 import { CallLog } from "@/lib/you/client";
 import { extract } from "@/lib/you/contents";
 import { search } from "@/lib/you/search";
-import { coverFor, logoFor } from "@/lib/live/images";
+import { coverFor, isGoodPhoto, logoFor } from "@/lib/live/images";
 import { mockCompanies } from "@/lib/mocks";
 import type { ApiResult, Company, TriggerType } from "@/lib/types";
 import { toDomain } from "@/lib/domain";
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     );
     const mentions = (h: (typeof hits)[number]) => `${h.title} ${h.description ?? ""}`.toLowerCase().includes(label);
     const hit = hits.find((h) => mentions(h) && !h.url.includes(domain)) ?? hits.find((h) => mentions(h));
-    const imageUrl = hit?.thumbnail_url ?? (await coverFor(name, domain, undefined, log)).imageUrl;
+    const imageUrl = isGoodPhoto(hit?.thumbnail_url) ? hit.thumbnail_url : (await coverFor(name, domain, undefined, log)).imageUrl;
 
     const data: Company = {
       id: `live_${domain}`,
