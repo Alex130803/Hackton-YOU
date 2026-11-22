@@ -7,7 +7,6 @@ import { mockOffers } from "@/lib/mocks/offers";
 import { logActivity } from "@/lib/activity";
 import type { DealCheck, EndpointCall } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
-import { EndpointTimeline } from "@/components/EndpointTimeline";
 import { TrustBadge } from "@/components/TrustBadge";
 import { SourceList } from "@/components/SourceList";
 
@@ -26,7 +25,7 @@ const HEADLINE = {
 export default function OfferCheck() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<DealCheck | null>(null);
-  const [calls, setCalls] = useState<EndpointCall[]>([]);
+  const [, setCalls] = useState<EndpointCall[]>([]); // kept so the "You.com calls" card can come back for a demo
   const [busy, setBusy] = useState<string>();
   const [error, setError] = useState<string>();
   const [reply, setReply] = useState("");
@@ -54,7 +53,7 @@ export default function OfferCheck() {
     <>
       <PageHeader title="Offer check" description="Got a brand deal by email or DM? Paste it here. We check the sender, open any links for you (so you never click them), and tell you if the pay is fair." />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="max-w-3xl">
         <div className="min-w-0 space-y-6">
           <div className="card p-4">
             <label className="label" htmlFor="offer">The message you got</label>
@@ -134,9 +133,6 @@ export default function OfferCheck() {
               </div>
             </>
           )}
-        </div>
-        <div className="lg:sticky lg:top-8 lg:self-start">
-          <EndpointTimeline calls={calls} busy={busy} />
         </div>
       </div>
     </>

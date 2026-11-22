@@ -58,13 +58,14 @@ Defined in `app/globals.css` inside `@layer components` (so Tailwind utilities c
 - Notes and alerts: `rounded-lg p-3 text-sm` + soft token bg (`bg-accent-soft text-accent` info, `bg-bad-soft text-bad` danger…).
 - Empty state: `rounded-xl border border-dashed border-line p-10 text-center text-sm text-muted` and one sentence telling the user what to do.
 - Loading: short text such as "Researching the brand…" with `animate-pulse text-sm text-muted`. No spinners all over the place.
+- Don't show API plumbing to the user. The "You.com calls" card (`EndpointTimeline`) was removed from all screens by the user's choice; API routes still return `calls`, so it can come back only if asked for a demo.
 
 - **Marketplace card** (`CompanyCard`): cover image on top (`aspect-[16/9]`), logo overlapping the bottom-left of the cover (`CompanyLogo`, white rounded box), then name, domain, trust badge, reason + date, 2-line summary, optional footer tag. Lists of companies are a **grid of these cards** (`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4`), not a plain list.
 - **Images**: company images come from the web via You.com (`thumbnail_url` of the news hit → `Company.imageUrl`, `favicon_url` → `Company.logoUrl`). Always render them through `CompanyCover` / `CompanyLogo`, which handle missing or broken images with a calm fallback (lavender + logo or initials). Never show a broken image icon.
-- **Side panel** for details: clicking a card opens a panel that slides in from the right (`max-w-xl`, full width on phones, `bg-black/20` backdrop, Esc and backdrop click close it, body scroll locked). Use this instead of navigating away or showing details under the list.
+- **Flow page** for acting on one item (e.g. pitching a brand at `/discover/[id]`): breadcrumb → big title (`text-3xl`) → numbered `Stepper` → two columns: the current step on the left, a **live preview on the right** (`SmsPhonePreview`: phone frame, purple header, message bubble on lavender, with a few quiet purple shapes around it). Bottom bar: "Back" text link on the left, `Save draft` (`.btn-ghost`) + `Next` (`.btn`) on the right. The final step has the explicit approve checkbox + Send. On laptops and desktops the whole flow **fits one screen with no page scroll** (page `lg:h-[calc(100vh-4rem)]`; only the step content may scroll inside; the bottom bar always stays visible). Outreach is **SMS only**; don't add channel pickers.
 - **Toolbar** above a list: tabs (segmented control in `bg-subtle` with a white active tab) on the left; on the next row a **small search** (`h-10`, `sm:max-w-md`) on the left and the single **Filter & sort** dropdown (`FilterSortMenu`) on the right, in the same row. Sorting and filtering always go in that one dropdown, never as separate controls.
 
-Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`, `CompanyCard`, `CompanyCover`, `CompanyLogo`, `FilterSortMenu`, `PitchHistory`, `SourceList`, `DraftEditor`, `EndpointTimeline` (the "You.com calls" card, required on screens that call You.com), `ChannelsInput`, `PlatformIcon`, `Slime`, `Sidebar`, `AppShell`, `OnboardingShapes`.
+Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`, `CompanyCard`, `CompanyCover`, `CompanyLogo`, `FilterSortMenu`, `PitchHistory`, `Stepper`, `SmsPhonePreview`, `SourceList`, `ChannelsInput`, `PlatformIcon`, `Slime`, `Sidebar`, `AppShell`, `OnboardingShapes`.
 
 ## 5. Icons
 
@@ -111,7 +112,7 @@ Small, smooth and purposeful, never flashy:
 - Say what happens and what to do: "Paste the full email or DM, including links." / "We opened these on our server. You don't need to click them."
 - Buttons are verbs: "Find brands", "Check offer", "Send SMS", "Copy reply", "Continue", "Finish".
 - Verdict words are fixed. Trust: **Verified / Check first / Likely scam**. Link scan: **Safe / Watch out / Dangerous**. Don't invent synonyms.
-- No jargon on screen ("LLM", "endpoint", "pipeline"), except inside the "You.com calls" card, which exists to show the API calls for the demo.
+- No jargon on screen ("LLM", "endpoint", "pipeline", "API").
 - Nothing is sent without the creator approving it, so make the approve step explicit (checkbox + button), as `DraftEditor` does.
 
 ## 10. Data and state (design-relevant)
@@ -146,5 +147,6 @@ Small, smooth and purposeful, never flashy:
   - Nested nav?
   - Animation without reduced-motion handling?
   - Jargon or new verdict words in the copy?
-  - An API screen without `EndpointTimeline`?
+  - API details (endpoints, call logs) shown to the user?
+  - A flow page that scrolls on a laptop?
 - If something new is genuinely needed and the system doesn't cover it, add it **to the system** (token in `globals.css`, class in `@layer components`, or a shared component) and mention it, rather than styling it inline in one page.

@@ -4,16 +4,19 @@
 import { useEffect, useState } from "react";
 import type { Company, TrustLevel } from "@/lib/types";
 
-export type PitchStatus = "sent" | "replied" | "deal" | "no_reply" | "declined";
+export type PitchStatus = "draft" | "sent" | "replied" | "deal" | "no_reply" | "declined";
 
 export const PITCH_STATUS: Record<PitchStatus, { label: string; cls: string }> = {
+  draft: { label: "Draft", cls: "border border-line bg-white text-foreground" },
   sent: { label: "Sent", cls: "bg-accent-soft text-accent" },
   replied: { label: "Replied", cls: "bg-ok-soft text-ok" },
   deal: { label: "Deal", cls: "bg-ok text-white" },
   no_reply: { label: "No reply", cls: "bg-subtle text-muted" },
   declined: { label: "Declined", cls: "bg-bad-soft text-bad" },
 };
-export const PITCH_STATUS_ORDER: PitchStatus[] = ["sent", "replied", "deal", "no_reply", "declined"];
+export const PITCH_STATUS_ORDER: PitchStatus[] = ["draft", "sent", "replied", "deal", "no_reply", "declined"];
+/** Statuses the creator can pick after sending (a draft only becomes "sent" by sending it). */
+export const SENT_STATUSES: PitchStatus[] = ["sent", "replied", "deal", "no_reply", "declined"];
 
 export interface Pitch {
   id: string;
@@ -44,7 +47,21 @@ function write(list: Pitch[]) {
 
 export function recordPitch(p: Omit<Pitch, "id" | "sentAt" | "status" | "updatedAt">) {
   const now = Date.now();
-  write([{ ...p, id: Math.random().toString(36).slice(2), sentAt: now, updatedAt: now, status: "sent" }, ...read()]);
+  const rest = read().filter((x) => !(x.status === "draft" && x.company.id === p.company.id)); // a sent pitch replaces its draft
+  write([{ ...p, id: Math.random().toString(36).slice(2), sentAt: now, updatedAt: now, status: "sent" }, ...rest]);
+}
+
+/** Save (or update) the one draft per company. */
+export function saveDraft(p: Omit<Pitch, "id" | "sentAt" | "status" | "updatedAt">) {
+  const now = Date.now();
+  const list = read();
+  const existing = list.find((x) => x.status === "draft" && x.company.id === p.company.id);
+  if (existing) write(list.map((x) => (x === existing ? { ...x, ...p, updatedAt: now } : x)));
+  else write([{ ...p, id: Math.random().toString(36).slice(2), sentAt: now, updatedAt: now, status: "draft" }, ...list]);
+}
+
+export function findDraft(companyId: string): Pitch | undefined {
+  return read().find((x) => x.status === "draft" && x.company.id === companyId);
 }
 export function setPitchStatus(id: string, status: PitchStatus) {
   write(read().map((p) => (p.id === id ? { ...p, status, updatedAt: Date.now() } : p)));

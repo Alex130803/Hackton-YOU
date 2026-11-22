@@ -1,21 +1,19 @@
 "use client";
 // OWNER: Person A — find brands (auto from the onboarding niche), look up a specific company by link,
-// brief + draft + send, and the history of sent pitches with their status.
-import { useEffect, useMemo, useRef, useState } from "react";
+// and the history of pitches with their status. Clicking a card opens the pitch page (/discover/[id]).
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Link2, CircleAlert, ArrowRight, RotateCw, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Link2, CircleAlert, ArrowRight, RotateCw } from "lucide-react";
 import { postApi } from "@/lib/api";
 import { profileLinks, useProfile } from "@/lib/profile";
 import { logActivity, timeAgo } from "@/lib/activity";
 import { toDomain } from "@/lib/domain";
-import { PITCH_STATUS, PITCH_STATUS_ORDER, recordPitch, usePitches, type Pitch } from "@/lib/pitches";
-import type { Brief, Company, Draft, EndpointCall, SendResult, TriggerType, TrustLevel, TrustVerdict } from "@/lib/types";
+import { PITCH_STATUS, PITCH_STATUS_ORDER, usePitches, type Pitch } from "@/lib/pitches";
+import { rememberCompany } from "@/lib/companyStore";
+import type { Company, EndpointCall, TriggerType, TrustLevel, TrustVerdict } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
-import { CompanyCard, CompanyCover, CompanyLogo, TRIGGER_LABEL } from "@/components/CompanyCard";
-import { EndpointTimeline } from "@/components/EndpointTimeline";
-import { SourceList } from "@/components/SourceList";
-import { DraftEditor } from "@/components/DraftEditor";
-import { TrustBadge } from "@/components/TrustBadge";
+import { CompanyCard, TRIGGER_LABEL } from "@/components/CompanyCard";
 import { FilterSortMenu, type MenuSection } from "@/components/FilterSortMenu";
 import { PitchHistory } from "@/components/PitchHistory";
 
@@ -25,6 +23,7 @@ type HistorySort = "newest" | "oldest" | "status";
 
 // Keep suggestions per niche while the tab is open, so coming back to this page doesn't search again.
 const cache: Record<string, { companies: Company[]; verdicts: Record<string, TrustVerdict>; calls: EndpointCall[] }> = {};
+let addedCache: Company[] = []; // companies the creator looked up by link
 
 const TRUST_LABEL: Record<TrustLevel, string> = { green: "Verified", yellow: "Check first", red: "Likely scam" };
 
@@ -32,19 +31,16 @@ export default function Discover() {
   const { profile, loaded } = useProfile();
   const niche = profile.niche;
   const pitches = usePitches();
+  const router = useRouter();
 
   const [view, setView] = useState<View>("suggestions");
   const [query, setQuery] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [added, setAdded] = useState<Company[]>([]);
+  const [added, setAddedState] = useState<Company[]>(addedCache);
+  const setAdded = (fn: (prev: Company[]) => Company[]) => setAddedState((prev) => (addedCache = fn(prev)));
   const [verdicts, setVerdicts] = useState<Record<string, TrustVerdict>>({});
-  const [selected, setSelected] = useState<Company | null>(null);
-  const [brief, setBrief] = useState<Brief | null>(null);
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [message, setMessage] = useState("");
-  const [calls, setCalls] = useState<EndpointCall[]>([]);
+  const [, setCalls] = useState<EndpointCall[]>([]); // kept so the "You.com calls" card can come back for a demo
   const [busy, setBusy] = useState<string>();
-  const [sentId, setSentId] = useState<string>();
   const [error, setError] = useState<string>();
 
   // Filter & sort
@@ -54,7 +50,10 @@ export default function Discover() {
   const [hSort, setHSort] = useState<HistorySort>("newest");
   const [statusF, setStatusF] = useState<string[]>([]);
 
-  const panelRef = useRef<HTMLDivElement>(null);
+  // /discover?view=history opens the History tab (used after sending a pitch).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("view") === "history") setView("history");
+  }, []);
   const log = (c: EndpointCall[]) => setCalls((prev) => [...prev, ...c]);
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(label); setError(undefined);
@@ -74,7 +73,7 @@ export default function Discover() {
       setCompanies(cache[niche].companies); setVerdicts((p) => ({ ...p, ...cache[niche].verdicts })); setCalls(cache[niche].calls);
       return;
     }
-    setCalls([]); setSelected(null); setBrief(null); setDraft(null); setSentId(undefined);
+    setCalls([]);
     const r = await postApi<Company[]>("/api/discover", { niche, links: profileLinks(profile) });
     log(r.calls); setCompanies(r.data);
     setBusy("Checking each brand");
@@ -87,41 +86,31 @@ export default function Discover() {
     if (loaded && niche) discover();
   }, [loaded, niche]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const pick = (company: Company) => run(`Researching ${company.name}`, async () => {
-    setSelected(company); setBrief(null); setDraft(null); setSentId(undefined);
-    const b = await postApi<Brief>("/api/brief", { company, niche });
-    log(b.calls); setBrief(b.data);
-    const d = await postApi<Draft>("/api/draft", { company, brief: b.data, creator: { niche, links: profileLinks(profile) } });
-    setDraft(d.data); setMessage(d.data.message);
-  });
+  // Open the pitch page for a company.
+  const open = (company: Company, verdict?: TrustVerdict) => {
+    rememberCompany(company, verdict ?? verdicts[company.id]);
+    router.push(`/discover/${encodeURIComponent(company.id)}`);
+  };
 
   const lookupDomain = toDomain(query);
   const lookup = async () => {
     if (!lookupDomain) return;
     const existing = [...added, ...companies].find((c) => c.domain === lookupDomain);
     setView("suggestions");
-    if (existing) { setQuery(""); pick(existing); return; }
+    if (existing) { setQuery(""); open(existing); return; }
     let found: Company | undefined;
+    let foundVerdict: TrustVerdict | undefined;
     await run(`Looking up ${lookupDomain}`, async () => {
       const r = await postApi<Company>("/api/lookup", { url: query, niche });
       log(r.calls);
       found = r.data;
       setAdded((prev) => [r.data, ...prev.filter((c) => c.domain !== r.data.domain)]);
       setQuery("");
-      await checkTrust([r.data]);
+      foundVerdict = (await checkTrust([r.data]))[r.data.id];
       logActivity({ kind: "search", title: `Looked up ${r.data.name}`, detail: r.data.domain, href: "/discover" });
     });
-    if (found) pick(found);
+    if (found) open(found, foundVerdict);
   };
-
-  const send = (to: string) => run("Sending SMS", async () => {
-    const r = await postApi<SendResult>("/api/send", { to, message, approved: true });
-    setSentId(`${r.data.provider} · ${r.data.id}`);
-    if (selected) {
-      recordPitch({ company: selected, trust: verdicts[selected.id]?.level, message, to });
-      logActivity({ kind: "pitch", title: `Pitched ${selected.name}`, detail: "SMS sent", tone: "ok", href: "/discover" });
-    }
-  });
 
   // Latest pitch per company, to show "Pitched 2d ago" on cards.
   const lastPitch = useMemo(() => {
@@ -184,22 +173,6 @@ export default function Discover() {
     : (hSort !== "newest" ? 1 : 0) + statusF.length;
   const reset = () => (view === "suggestions" ? (setSort("recommended"), setTrustF([]), setReasonF([])) : (setHSort("newest"), setStatusF([])));
 
-  // Side panel keeps showing the last company while it slides out.
-  const [shown, setShown] = useState<Company | null>(null);
-  useEffect(() => { if (selected) setShown(selected); }, [selected]);
-  const close = () => setSelected(null);
-  useEffect(() => {
-    if (!selected) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.scrollTo({ top: 0 });
-    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
-  }, [selected]);
-
-  const verdict = shown ? verdicts[shown.id] : undefined;
-  const shownPitch = shown ? lastPitch[shown.id] : undefined;
   const loadingList = busy === "Finding brands for you" || busy === "Checking each brand";
 
   return (
@@ -267,9 +240,10 @@ export default function Discover() {
             ))}
             {visible.map((c) => {
               const p = lastPitch[c.id];
-              const tag = p ? <>Pitched {timeAgo(p.sentAt)} · <span className="font-medium text-foreground">{PITCH_STATUS[p.status].label}</span></>
+              const tag = p?.status === "draft" ? <>Draft saved {timeAgo(p.updatedAt)} · <span className="font-medium text-accent">Continue</span></>
+                : p ? <>Pitched {timeAgo(p.sentAt)} · <span className="font-medium text-foreground">{PITCH_STATUS[p.status].label}</span></>
                 : addedIds.has(c.id) ? "Added by you" : undefined;
-              return <CompanyCard key={c.id} company={c} verdict={verdicts[c.id]} verdictLoading={!verdicts[c.id]} selected={selected?.id === c.id} onSelect={() => pick(c)} tag={tag} />;
+              return <CompanyCard key={c.id} company={c} verdict={verdicts[c.id]} verdictLoading={!verdicts[c.id]} onSelect={() => open(c)} tag={tag} />;
             })}
           </div>
           {!loadingList && all.length === 0 && (
@@ -278,76 +252,9 @@ export default function Discover() {
           {all.length > 0 && visible.length === 0 && (
             <div className="mt-5 rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">No brands match. Clear the search or reset the filters.</div>
           )}
-          <div className="mt-8 max-w-xl"><EndpointTimeline calls={calls} busy={busy} /></div>
         </>
       )}
 
-      {/* Brand details: side panel that slides in from the right */}
-      <div className={`fixed inset-0 z-40 ${selected ? "" : "pointer-events-none"}`} aria-hidden={!selected}>
-        <div onClick={close} className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${selected ? "opacity-100" : "opacity-0"}`} />
-        <div
-          ref={panelRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label={shown ? `${shown.name} details` : "Brand details"}
-          className={`absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-line bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${selected ? "translate-x-0" : "translate-x-full"}`}
-        >
-          {shown && (
-            <>
-              <div className="relative">
-                <CompanyCover company={shown} className="aspect-[16/7] w-full" />
-                <button type="button" onClick={close} aria-label="Close" className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-line bg-white text-foreground hover:border-foreground">
-                  <X size={17} />
-                </button>
-                <div className="absolute -bottom-6 left-6"><CompanyLogo company={shown} size={52} /></div>
-              </div>
-
-              <div className="space-y-6 p-6 pt-9">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-xl font-semibold">{shown.name}</h2>
-                    <div className="text-sm text-muted">{shown.domain} · {TRIGGER_LABEL[shown.trigger.type]} · {shown.trigger.date}</div>
-                  </div>
-                  <TrustBadge verdict={verdict} loading={!verdict} />
-                </div>
-
-                {shownPitch && (
-                  <div className="flex flex-wrap items-center gap-2 rounded-lg bg-accent-soft p-3 text-sm text-accent">
-                    You pitched them {timeAgo(shownPitch.sentAt)}. Status: <span className="font-medium">{PITCH_STATUS[shownPitch.status].label}</span>.
-                    <button type="button" onClick={() => { close(); setView("history"); }} className="font-medium underline">Open history</button>
-                  </div>
-                )}
-
-                {verdict && verdict.level !== "green" && (
-                  <div className={`rounded-lg p-3 text-sm ${verdict.level === "red" ? "bg-bad-soft text-bad" : "bg-warn-soft text-warn"}`}>
-                    <div className="font-medium">{verdict.level === "red" ? "We don't recommend contacting this brand." : "Double-check this brand before you pitch."}</div>
-                    <ul className="mt-1 space-y-0.5">{verdict.signals.map((s) => <li key={s.label}>{s.label}: {s.detail}</li>)}</ul>
-                  </div>
-                )}
-
-                {!brief || brief.companyId !== shown.id ? (
-                  <div className="animate-pulse text-sm text-muted">Researching the brand…</div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <div><div className="text-xs font-medium text-muted">Why now</div><p className="mt-1 text-sm">{brief.whyNow}</p></div>
-                    <div><div className="text-xs font-medium text-muted">Why you</div><p className="mt-1 text-sm">{brief.creatorFit || "We'll explain the fit once live research is connected."}</p></div>
-                    <div className="sm:col-span-2"><SourceList sources={brief.sources} /></div>
-                  </div>
-                )}
-
-                {draft && draft.companyId === shown.id && (
-                  <div className="space-y-4 border-t border-line pt-6">
-                    <DraftEditor key={shown.id} value={message} onChange={setMessage} onSend={send} defaultTo={profile.phone} sending={busy === "Sending SMS"} sentId={sentId} disabled={verdict?.level === "red"} />
-                    <div className="text-xs text-muted">Contact hints: {shown.contactHints.join(" · ")}</div>
-                  </div>
-                )}
-
-                <EndpointTimeline calls={calls} busy={busy} />
-              </div>
-            </>
-          )}
-        </div>
-      </div>
     </>
   );
 }
