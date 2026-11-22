@@ -24,6 +24,7 @@ export const MockProvider: SmsProvider = {
 export function getSmsProvider(): SmsProvider {
   if (USE_MOCKS) return MockProvider;
   if (process.env.SMS_PROVIDER === "infobip") return process.env.INFOBIP_API_KEY ? InfobipProvider : MockProvider;
-  const twilioReady = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM;
+  const whatsapp = process.env.MESSAGE_CHANNEL === "whatsapp"; // WhatsApp doesn't need TWILIO_FROM
+  const twilioReady = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (whatsapp || process.env.TWILIO_FROM);
   return twilioReady ? TwilioProvider : MockProvider;
 }

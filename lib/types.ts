@@ -98,4 +98,5 @@ export interface SendResult {
   /** The number it actually went to (in test mode this is the test number, not the brand). */
   to?: string;
   testMode?: boolean;
+  channel?: "sms" | "whatsapp";
 }

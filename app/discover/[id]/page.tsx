@@ -42,10 +42,11 @@ export default function PitchPage() {
   const [savedAt, setSavedAt] = useState<number>();
   const [sent, setSent] = useState<SendResult | null>(null);
   const [testNumber, setTestNumber] = useState<string | null>(null);
+  const [channel, setChannel] = useState<"sms" | "whatsapp">("sms");
 
   // Test mode (SMS_TEST_NUMBER on the server): every SMS goes only to that number.
   useEffect(() => {
-    fetch("/api/send").then((r) => r.json()).then((j: { testNumber: string | null }) => setTestNumber(j.testNumber)).catch(() => {});
+    fetch("/api/send").then((r) => r.json()).then((j: { testNumber: string | null; channel?: "sms" | "whatsapp" }) => { setTestNumber(j.testNumber); setChannel(j.channel ?? "sms"); }).catch(() => {});
   }, []);
 
   const log = (c: EndpointCall[]) => setCalls((prev) => [...prev, ...c]);
@@ -138,7 +139,7 @@ export default function PitchPage() {
                 <Link href="/discover?view=history" className="btn-ghost">Open history</Link>
               </div>
               <p className="mt-4 text-xs text-muted">
-                {sent.provider === "mock" ? "Demo mode: no real SMS was sent." : sent.testMode ? `Test mode: sent to ${sent.to}, not to the brand.` : `Sent to ${sent.to}.`}
+                {sent.provider === "mock" ? "Demo mode: no real SMS was sent." : `${sent.testMode ? "Test mode: sent" : "Sent"} to ${sent.to}${sent.channel === "whatsapp" ? " on WhatsApp" : " by SMS"}${sent.testMode ? ", not to the brand." : "."}`}
               </p>
             </div>
           ) : (
@@ -232,7 +233,7 @@ export default function PitchPage() {
                   <p className="mt-1 text-sm text-muted">Check the number and send it as an SMS. Nothing goes out until you press Send.</p>
                   {testNumber && (
                     <div className="mt-4 rounded-lg bg-accent-soft p-3 text-sm text-accent">
-                      <span className="font-medium">Test mode.</span> Every SMS goes only to <span className="font-medium">{testNumber}</span>, not to {company.name}.
+                      <span className="font-medium">Test mode.</span> Every message goes only to <span className="font-medium">{testNumber}</span>{channel === "whatsapp" ? " on WhatsApp" : ""}, not to {company.name}.
                     </div>
                   )}
                   <div className="mt-6 space-y-5">
@@ -270,7 +271,7 @@ export default function PitchPage() {
                     </label>
                     {red && <div className="rounded-lg bg-bad-soft p-3 text-sm text-bad">Sending is turned off because this brand looks like a scam.</div>}
                     <button type="button" className="btn" disabled={!approved || (!to.trim() && !testNumber) || !message.trim() || red || !!busy} onClick={send}>
-                      <Send size={15} /> {busy === "Sending SMS" ? "Sending…" : "Send SMS"}
+                      <Send size={15} /> {busy === "Sending SMS" ? "Sending…" : channel === "whatsapp" ? "Send on WhatsApp" : "Send SMS"}
                     </button>
                   </div>
                 </section>

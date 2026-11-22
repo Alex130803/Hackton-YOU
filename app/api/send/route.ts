@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { getSmsProvider } from "@/lib/sms/provider";
 import { toE164 } from "@/lib/phone";
+import { messageChannel } from "@/lib/sms/twilio";
 import type { ApiResult, SendResult } from "@/lib/types";
 
 /** Test mode: while SMS_TEST_NUMBER is set, every SMS goes only to that number, never to the brand. */
@@ -9,7 +10,7 @@ const testNumber = () => toE164(process.env.SMS_TEST_NUMBER ?? "");
 
 export async function GET() {
   const n = testNumber();
-  return NextResponse.json({ testMode: !!n, testNumber: n });
+  return NextResponse.json({ testMode: !!n, testNumber: n, channel: messageChannel() });
 }
 
 export async function POST(req: Request) {
