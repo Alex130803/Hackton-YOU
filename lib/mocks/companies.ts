@@ -4,6 +4,7 @@ import type { Company } from "@/lib/types";
 export const mockCompanies: Company[] = [
   {
     id: "co_trailpeak",
+    imageUrl: "/mocks/trailpeak.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "TrailPeak Gear",
     domain: "trailpeak.example",
     niche: "outdoor",
@@ -17,6 +18,7 @@ export const mockCompanies: Company[] = [
   },
   {
     id: "co_brewlab",
+    imageUrl: "/mocks/brewlab.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "BrewLab Coffee",
     domain: "brewlab.example",
     niche: "food",
@@ -30,6 +32,7 @@ export const mockCompanies: Company[] = [
   },
   {
     id: "co_pixelforge",
+    imageUrl: "/mocks/pixelforge.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "PixelForge Studio",
     domain: "pixelforge.example",
     niche: "tech",
@@ -43,6 +46,7 @@ export const mockCompanies: Company[] = [
   },
   {
     id: "co_glowdrop",
+    imageUrl: "/mocks/glowdrop.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "GlowDrop Skincare",
     domain: "glowdrop-official.example",
     niche: "beauty",
@@ -53,5 +57,33 @@ export const mockCompanies: Company[] = [
       date: "2026-11-20",
     },
     contactHints: ["DM on Telegram @glowdrop_collab"],
+  },
+];
+
+// Page 2 of demo suggestions (fictional). No images on purpose: shows the logo fallback.
+export const mockCompaniesMore: Company[] = [
+  {
+    id: "co_summitthread",
+    name: "Summit Thread Co.",
+    domain: "summitthread.example",
+    niche: "outdoor",
+    trigger: { type: "launch", summary: "Released a recycled merino base-layer line for winter hikers.", sourceUrl: "https://news.example/summit-thread-merino", date: "2026-11-12" },
+    contactHints: ["press@summitthread.example"],
+  },
+  {
+    id: "co_kettleember",
+    name: "Kettle & Ember",
+    domain: "kettleember.example",
+    niche: "outdoor",
+    trigger: { type: "funding", summary: "Raised a $4M seed round for its packable camp stoves.", sourceUrl: "https://techpress.example/kettle-ember-seed", date: "2026-11-09" },
+    contactHints: ["hello@kettleember.example"],
+  },
+  {
+    id: "co_ridgeline",
+    name: "Ridgeline Optics",
+    domain: "ridgelineoptics.example",
+    niche: "outdoor",
+    trigger: { type: "marketing_hire", summary: "Posted a Creator Partnerships Lead role (remote).", sourceUrl: "https://jobs.example/ridgeline/creator-partnerships", date: "2026-11-16" },
+    contactHints: ["partners@ridgelineoptics.example"],
   },
 ];

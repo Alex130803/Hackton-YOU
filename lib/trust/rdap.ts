@@ -12,7 +12,8 @@ export interface DomainInfo {
 export async function lookupDomain(domain: string): Promise<DomainInfo> {
   const res = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, {
     signal: AbortSignal.timeout(8_000),
-    headers: { Accept: "application/rdap+json" },
+    // rdap.org answers 403 to requests without a User-Agent (Node's default), so send a generic one.
+    headers: { Accept: "application/rdap+json, application/json", "User-Agent": "Ultraviolet/0.1 (hackathon demo)" },
   });
   if (!res.ok) return { domain };
   const json = (await res.json()) as { events?: { eventAction: string; eventDate: string }[] };

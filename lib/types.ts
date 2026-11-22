@@ -15,6 +15,10 @@ export interface Company {
     date: string; // ISO 8601
   };
   contactHints: string[]; // e.g. "partnerships@acme.com", "Head of Growth: Jane Doe (LinkedIn)"
+  /** Card cover. Live: `thumbnail_url` of the trigger article from You.com Web Search. */
+  imageUrl?: string;
+  /** Small logo. Live: `favicon_url` from You.com results (https://you.com/favicon?domain=…&size=128). */
+  logoUrl?: string;
 }
 
 export type TrustLevel = "green" | "yellow" | "red";
@@ -36,6 +40,10 @@ export interface Brief {
   whyNow: string;
   creatorFit: string;
   sources: { title: string; url: string }[];
+  /** Public business contact found on the web (live: You.com Research), with where it was found. */
+  contact?: { phone: string | null; email: string | null; sourceUrl: string | null };
+  /** Short SMS body written by research from sourced facts (no links; the app appends the creator's links). */
+  suggestedMessage?: string;
 }
 
 export interface Draft {
@@ -87,4 +95,8 @@ export interface SendResult {
   ok: boolean;
   provider: "twilio" | "infobip" | "mock";
   id: string;
+  /** The number it actually went to (in test mode this is the test number, not the brand). */
+  to?: string;
+  testMode?: boolean;
+  channel?: "sms" | "whatsapp";
 }

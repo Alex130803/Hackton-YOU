@@ -8,6 +8,9 @@
   --muted: #6b6b73;
   --accent: #6d28d9;      /* purple — the only accent */
   --accent-soft: #f4f0fe;
+  --sidebar: #f8f5ff;      /* ultra light purple, sidebar only */
+  --sidebar-line: #ebe4fb;
+  --tint: #fbf9ff;         /* barely-there violet, bottom part of company cards */
   --ok: #15803d;
   --ok-soft: #ecfdf3;
   --warn: #a16207;
@@ -24,6 +27,9 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-line: var(--sidebar-line);
+  --color-tint: var(--tint);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);

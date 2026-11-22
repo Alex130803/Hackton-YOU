@@ -20,11 +20,13 @@ All colors are defined in `app/globals.css` and used through Tailwind names:
 | --- | --- | --- |
 | `--background` #ffffff | `bg-background` | page background (always white) |
 | `--foreground` #0a0a0a | `text-foreground`, `bg-foreground` | text, primary buttons, focused input border |
-| `--subtle` #fafafa | `bg-subtle` | sidebar background, very light fills |
+| `--subtle` #fafafa | `bg-subtle` | very light fills (skeletons, tab bar, code/message boxes) |
+| `--sidebar` #f8f5ff / `--sidebar-line` #ebe4fb | `bg-sidebar`, `border-sidebar-line` | **sidebar only**: ultra light purple panel and its inner dividers |
+| `--tint` #fbf9ff | `bg-tint` | barely-there violet: the text part of company cards (under the image) |
 | `--line` #e7e7e9 | `border-line` | all borders and dividers |
 | `--muted` #6b6b73 | `text-muted` | secondary text, hints, timestamps |
 | `--accent` #6d28d9 | `text-accent`, `bg-accent` | **the only accent**: active nav, links on hover, chosen chip, progress bar, avatar |
-| `--accent-soft` #f4f0fe | `bg-accent-soft` | active nav pill, selected chip, info notes, focus ring |
+| `--accent-soft` #f4f0fe | `bg-accent-soft` | selected chip, info notes, focus ring, image fallback behind a logo |
 | `--ok` / `--ok-soft` | `text-ok`, `bg-ok-soft` | "Verified", success, "Sent" |
 | `--warn` / `--warn-soft` | `text-warn`, `bg-warn-soft` | "Check first", caution |
 | `--bad` / `--bad-soft` | `text-bad`, `bg-bad-soft` | "Likely scam", errors |
@@ -57,8 +59,17 @@ Defined in `app/globals.css` inside `@layer components` (so Tailwind utilities c
 - Notes and alerts: `rounded-lg p-3 text-sm` + soft token bg (`bg-accent-soft text-accent` info, `bg-bad-soft text-bad` danger…).
 - Empty state: `rounded-xl border border-dashed border-line p-10 text-center text-sm text-muted` and one sentence telling the user what to do.
 - Loading: short text such as "Researching the brand…" with `animate-pulse text-sm text-muted`. No spinners all over the place.
+- Don't show API plumbing to the user. The "You.com calls" card (`EndpointTimeline`) was removed from all screens by the user's choice; API routes still return `calls`, so it can come back only if asked for a demo.
 
-Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`, `CompanyCard`, `SourceList`, `DraftEditor`, `EndpointTimeline` (the "You.com calls" card, required on screens that call You.com), `ChannelsInput`, `PlatformIcon`, `Slime`, `Sidebar`, `AppShell`, `OnboardingShapes`.
+- **Marketplace card** (`CompanyCard`): cover image on top (`aspect-[16/9]`), logo overlapping the bottom-left of the cover (`CompanyLogo`, white rounded box), then the text part on `bg-tint` (name, domain, trust badge, reason + date, 2-line summary, optional footer tag). Page titles can keep their explanation in an (i) tooltip (`PageHeader infoTip`) instead of a line of text. Lists of companies are a **grid of these cards** (`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4`), not a plain list.
+- **Images**: company images come from the web via You.com (`thumbnail_url` of the news hit → `Company.imageUrl`, `favicon_url` → `Company.logoUrl`). Always render them through `CompanyCover` / `CompanyLogo`, which handle missing or broken images with a calm fallback (lavender + logo or initials). Never show a broken image icon.
+- **Flow page** for acting on one item (e.g. pitching a brand at `/discover/[id]`): breadcrumb → big title (`text-3xl`) → numbered `Stepper` → two columns: the current step on the left, a **live preview on the right** (`SmsPhonePreview`: phone frame, purple header, message bubble on lavender, with a few quiet purple shapes around it). Bottom bar: "Back" text link on the left, `Save draft` (`.btn-ghost`) + `Next` (`.btn`) on the right. The final step has the explicit approve checkbox + Send. On laptops and desktops the whole flow **fits one screen with no page scroll** (page `lg:h-[calc(100vh-4rem)]`; only the step content may scroll inside; the bottom bar always stays visible). Outreach is **SMS only**; don't add channel pickers.
+- **Toolbar** above a list: tabs (segmented control in `bg-subtle` with a white active tab) on the left; on the next row a **small search** (`h-10`, `sm:max-w-md`) on the left and the single **Filter & sort** dropdown (`FilterSortMenu`) on the right, in the same row. Sorting and filtering always go in that one dropdown, never as separate controls.
+- **Favorites**: a heart (`FavoriteButton`) sits in the top-right of every company card (white round button over the image) and next to the title on the pitch page. Filled purple = saved. It saves to the database immediately; never ask for confirmation.
+- **Pages of AI results**: below a results grid, a pager: `Previous` (`.btn-ghost`) on the left, page numbers in the middle (active = `bg-accent-soft text-accent`, then "…"), and on the right `Next page` or, past the last loaded page, `New brands →` (`.btn`), which asks the AI for results not shown yet. When nothing new comes back: "That's all for now. Try another search."
+- **AI-found values** (e.g. a phone number found on the web): prefill the field, and right under it show `Globe` icon + "Found on the web" + a link to the source host in `text-accent`, plus a short caveat in `text-muted`. If the user edits it, offer a one-click way back to the found value. If nothing was found, say so plainly and tell them where to look. Never present a found value without its source.
+
+Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`, `CompanyCard`, `CompanyCover`, `CompanyLogo`, `FilterSortMenu`, `PitchHistory`, `Stepper`, `SmsPhonePreview`, `SourceList`, `ChannelsInput`, `PlatformIcon`, `Slime`, `Sidebar`, `AppShell`, `OnboardingShapes`.
 
 ## 5. Icons
 
@@ -70,6 +81,7 @@ Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`
 ## 6. Layout
 
 - App shell: `AppShell` renders the `Sidebar` + `<main className="min-w-0 flex-1 px-4 py-6 md:px-10 md:py-8">` + `max-w-5xl` content column. New pages go inside it automatically. Don't add your own sidebar or top nav.
+- Sidebar look: a **floating panel**, detached from the window edges (`m-2 md:m-3`, height `calc(100vh - margins)`), `rounded-2xl`, `bg-sidebar` (ultra light purple), `border-sidebar-line` all around. No colored edge line on the sidebar (tried and removed). The active nav item is a **white pill** that slides between items, and its icon + label glide to the center. Hover on the sidebar is `hover:bg-white/70`.
 - Sidebar is **one level only**: Home, Find brands, Offer check, then Recent + This week, then Settings + account at the bottom. Never nest sub-menus. New top-level page → add one entry to `NAV` in `components/Sidebar.tsx` with a lucide icon.
 - Spacing: `gap-3/4/6`, sections `space-y-6`, page header `mb-8`, big section break `mt-12`.
 - Radius: `rounded-lg` (8px) for buttons, inputs and small boxes; `rounded-xl` (12px) for cards and pills; `rounded-full` for chips, badges and avatars.
@@ -104,13 +116,13 @@ Small, smooth and purposeful, never flashy:
 - Say what happens and what to do: "Paste the full email or DM, including links." / "We opened these on our server. You don't need to click them."
 - Buttons are verbs: "Find brands", "Check offer", "Send SMS", "Copy reply", "Continue", "Finish".
 - Verdict words are fixed. Trust: **Verified / Check first / Likely scam**. Link scan: **Safe / Watch out / Dangerous**. Don't invent synonyms.
-- No jargon on screen ("LLM", "endpoint", "pipeline"), except inside the "You.com calls" card, which exists to show the API calls for the demo.
+- No jargon on screen ("LLM", "endpoint", "pipeline", "API").
 - Nothing is sent without the creator approving it, so make the approve step explicit (checkbox + button), as `DraftEditor` does.
 
 ## 10. Data and state (design-relevant)
 
 - No login or signup. Profile lives in `lib/profile.ts` (browser), activity in `lib/activity.ts`. Onboarding opens in every new window.
-- If a database is ever needed: SQLite file in the repo, committed (see README). Don't add a hosted DB.
+- Shared data goes in the SQLite file `data/ultraviolet.db` (committed; see README). Don't add a hosted DB.
 - `USE_MOCKS=true` must keep every screen working with mock data. Mock companies are fictional (`.example` domains). Never put real brand names in mocks.
 
 ## 11. How you work
@@ -139,5 +151,6 @@ Small, smooth and purposeful, never flashy:
   - Nested nav?
   - Animation without reduced-motion handling?
   - Jargon or new verdict words in the copy?
-  - An API screen without `EndpointTimeline`?
+  - API details (endpoints, call logs) shown to the user?
+  - A flow page that scrolls on a laptop?
 - If something new is genuinely needed and the system doesn't cover it, add it **to the system** (token in `globals.css`, class in `@layer components`, or a shared component) and mention it, rather than styling it inline in one page.

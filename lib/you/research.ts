@@ -34,3 +34,20 @@ export async function research(input: string, research_effort: ResearchEffort = 
 export async function financeResearch(input: string, research_effort: ResearchEffort = "lite"): Promise<ResearchResponse> {
   return youFetch<ResearchResponse>(YOU_API, "/v1/finance_research", { input, research_effort }, { timeoutMs: TIMEOUTS[research_effort] });
 }
+
+/**
+ * Research with `output_schema`: `output.content` comes back as a JSON object.
+ * Docs: https://you.com/docs/guides/research/structured-output.md — needs effort "standard" or higher
+ * (lite returns 422). Schema rules: object root, every property required (use ["string","null"] for optional),
+ * additionalProperties: false everywhere.
+ */
+export async function researchStructured<T>(
+  input: string,
+  output_schema: Record<string, unknown>,
+  research_effort: Exclude<ResearchEffort, "lite"> = "standard",
+): Promise<{ content: T; sources: ResearchResponse["output"]["sources"] }> {
+  const r = await youFetch<{ output: { content: T; content_type: string; sources: ResearchResponse["output"]["sources"] } }>(
+    YOU_API, "/v1/research", { input, research_effort, output_schema }, { timeoutMs: TIMEOUTS[research_effort] },
+  );
+  return { content: r.output.content, sources: r.output.sources ?? [] };
+}
