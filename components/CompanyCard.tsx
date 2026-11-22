@@ -64,7 +64,7 @@ export function CompanyCard({
         <div className="absolute -bottom-5 left-4"><CompanyLogo company={company} /></div>
       </div>
 
-      <div className="flex flex-1 flex-col p-4 pt-7">
+      <div className="flex flex-1 flex-col bg-tint p-4 pt-7">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="truncate font-medium">{company.name}</div>
@@ -76,7 +76,7 @@ export function CompanyCard({
           <span className="font-medium text-accent">{TRIGGER_LABEL[company.trigger.type]}</span> · {company.trigger.date}
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-foreground/80">{company.trigger.summary}</p>
-        {tag && <div className="mt-auto border-t border-line pt-2 text-xs text-muted [&:not(:first-child)]:mt-3">{tag}</div>}
+        {tag && <div className="mt-auto border-t border-sidebar-line pt-2 text-xs text-muted [&:not(:first-child)]:mt-3">{tag}</div>}
       </div>
     </button>
   );

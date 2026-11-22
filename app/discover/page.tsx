@@ -212,7 +212,7 @@ export default function Discover() {
 
   return (
     <>
-      <PageHeader title="Find brands" description="Brands in your niche with a fresh reason to work with creators. Paste a company's website to pitch a specific one." />
+      <PageHeader title="Find brands" infoTip description="Brands in your niche with a fresh reason to work with creators. Paste a company's website to pitch a specific one." />
 
       {/* Row 1: tabs + what the suggestions are based on */}
       <div className="flex flex-wrap items-center justify-between gap-3">
