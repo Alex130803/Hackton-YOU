@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Search, ShieldCheck, Settings, Send, ScanSearch, PanelLeftClose, PanelLeftOpen, Heart } from "lucide-react";
+import { Search, ShieldCheck, Settings, Send, ScanSearch, PanelLeftClose, PanelLeftOpen, Heart, ChevronDown } from "lucide-react";
 import { useProfile } from "@/lib/profile";
 import { timeAgo, useActivity, type Activity } from "@/lib/activity";
 import { Slime } from "./Slime";
@@ -16,6 +16,7 @@ const NAV = [
 const KIND_ICON = { search: ScanSearch, pitch: Send, check: ShieldCheck } as const;
 const TONE = { ok: "bg-ok", warn: "bg-warn", bad: "bg-bad" } as const;
 const COLLAPSE_KEY = "creator-outreach.sidebar-collapsed";
+const RECENT_KEY = "creator-outreach.recent-hidden";
 
 /** Active link: its icon + label glide to the center of the button. Inactive links stay left-aligned. */
 function NavLink({ href, label, icon: Icon, active, linkRef }: { href: string; label: string; icon: typeof Search; active: boolean; linkRef?: (el: HTMLAnchorElement | null) => void }) {
@@ -127,6 +128,13 @@ export function Sidebar({ demo }: { demo: boolean }) {
     const id = requestAnimationFrame(() => setAnimateWidth(true));
     return () => cancelAnimationFrame(id);
   }, []);
+  // The Recent list can be hidden (remembered per browser).
+  const [recentHidden, setRecentHidden] = useState(false);
+  useEffect(() => { try { setRecentHidden(localStorage.getItem(RECENT_KEY) === "1"); } catch {} }, []);
+  const toggleRecent = () => setRecentHidden((h) => {
+    try { localStorage.setItem(RECENT_KEY, h ? "0" : "1"); } catch {}
+    return !h;
+  });
   const toggle = () => setCollapsed((c) => {
     try { localStorage.setItem(COLLAPSE_KEY, c ? "0" : "1"); } catch {}
     return !c;
@@ -177,8 +185,19 @@ export function Sidebar({ demo }: { demo: boolean }) {
       </nav>
 
       <div className="mt-6 hidden min-h-0 flex-1 flex-col md:group-data-[wide=true]/sb:flex">
-        <div className="mb-1 px-3 text-xs font-medium text-muted">Recent</div>
-        {activity.length === 0 ? (
+        <button
+          type="button"
+          onClick={toggleRecent}
+          aria-expanded={!recentHidden}
+          className="mb-1 flex w-full items-center justify-between rounded-md px-3 py-0.5 text-xs font-medium text-muted transition-colors hover:text-foreground"
+        >
+          Recent
+          <span className="inline-flex items-center gap-1">
+            {recentHidden ? "Show" : "Hide"}
+            <ChevronDown size={14} className={`transition-transform duration-200 ${recentHidden ? "-rotate-90" : ""}`} />
+          </span>
+        </button>
+        {recentHidden ? null : activity.length === 0 ? (
           <p className="px-3 text-[13px] leading-snug text-muted">Brands you pitch and offers you check show up here.</p>
         ) : (
           <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
