@@ -2,14 +2,13 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { House, Search, ShieldCheck, Settings, Send, ScanSearch, PanelLeftClose, PanelLeftOpen, Heart } from "lucide-react";
+import { Search, ShieldCheck, Settings, Send, ScanSearch, PanelLeftClose, PanelLeftOpen, Heart } from "lucide-react";
 import { useProfile } from "@/lib/profile";
 import { timeAgo, useActivity, type Activity } from "@/lib/activity";
 import { Slime } from "./Slime";
 
 const NAV = [
-  { href: "/", label: "Home", icon: House },
-  { href: "/discover", label: "Find brands", icon: Search },
+  { href: "/", label: "Find brands", icon: Search }, // the home screen
   { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/check", label: "Offer check", icon: ShieldCheck },
 ];
@@ -19,7 +18,7 @@ const TONE = { ok: "bg-ok", warn: "bg-warn", bad: "bg-bad" } as const;
 const COLLAPSE_KEY = "creator-outreach.sidebar-collapsed";
 
 /** Active link: its icon + label glide to the center of the button. Inactive links stay left-aligned. */
-function NavLink({ href, label, icon: Icon, active, linkRef }: { href: string; label: string; icon: typeof House; active: boolean; linkRef?: (el: HTMLAnchorElement | null) => void }) {
+function NavLink({ href, label, icon: Icon, active, linkRef }: { href: string; label: string; icon: typeof Search; active: boolean; linkRef?: (el: HTMLAnchorElement | null) => void }) {
   const ownRef = useRef<HTMLAnchorElement | null>(null);
   const innerRef = useRef<HTMLSpanElement | null>(null);
   const [shift, setShift] = useState(0);
@@ -67,7 +66,7 @@ function NavLink({ href, label, icon: Icon, active, linkRef }: { href: string; l
 }
 
 /** Group of links with a highlight pill that slides smoothly to the active one. */
-function NavGroup({ items, isActive }: { items: { href: string; label: string; icon: typeof House }[]; isActive: (href: string) => boolean }) {
+function NavGroup({ items, isActive }: { items: { href: string; label: string; icon: typeof Search }[]; isActive: (href: string) => boolean }) {
   const refs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [pill, setPill] = useState<{ top: number; height: number; show: boolean }>({ top: 0, height: 0, show: false });
   const [animate, setAnimate] = useState(false);
@@ -118,7 +117,7 @@ export function Sidebar({ demo }: { demo: boolean }) {
   const path = usePathname();
   const { profile } = useProfile();
   const activity = useActivity();
-  const isActive = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`));
+  const isActive = (href: string) => (href === "/" ? path === "/" || path.startsWith("/discover/") : path === href || path.startsWith(`${href}/`));
 
   // Collapsible on desktop (phones always get the narrow icon bar). Remembered per browser.
   const [collapsed, setCollapsed] = useState(false);

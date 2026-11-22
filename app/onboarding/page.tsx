@@ -173,7 +173,7 @@ function AllSet({ profile, onEdit }: { profile: Profile; onEdit: () => void }) {
       </div>
 
       <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <Link href="/discover" className="btn"><Search size={15} /> Find brands</Link>
+        <Link href="/" className="btn"><Search size={15} /> Find brands</Link>
         <Link href="/check" className="btn-ghost"><ShieldCheck size={15} /> Check an offer</Link>
       </div>
       <Link href="/" className="mt-4 inline-block text-sm text-muted hover:text-foreground">Go to home</Link>

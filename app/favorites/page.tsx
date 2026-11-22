@@ -26,7 +26,7 @@ export default function FavoritesPage() {
         <div className="rounded-xl border border-dashed border-line p-10 text-center">
           <Heart size={22} className="mx-auto text-muted" />
           <p className="mt-3 text-sm text-muted">No favorites yet. Tap the heart on a brand to save it here.</p>
-          <Link href="/discover" className="btn mt-5"><Search size={15} /> Find brands</Link>
+          <Link href="/" className="btn mt-5"><Search size={15} /> Find brands</Link>
         </div>
       ) : (
         <>

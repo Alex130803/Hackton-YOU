@@ -55,7 +55,7 @@ export default function PitchPage() {
   useEffect(() => {
     if (!loaded) return;
     const hit = recallCompany(decodeURIComponent(id));
-    if (!hit) { router.replace("/discover"); return; }
+    if (!hit) { router.replace("/"); return; }
     const c = hit.company;
     setCompany(c);
     const draft = findDraft(c.id);
@@ -101,7 +101,7 @@ export default function PitchPage() {
     try {
       const r = await postApi<SendResult>("/api/send", { to, message, approved: true });
       recordPitch({ company, trust: verdict?.level, message, to });
-      logActivity({ kind: "pitch", title: `Pitched ${company.name}`, detail: "SMS sent", tone: "ok", href: "/discover" });
+      logActivity({ kind: "pitch", title: `Pitched ${company.name}`, detail: "SMS sent", tone: "ok", href: "/" });
       setSent(r.data);
     } catch (e) {
       setError((e as Error).message);
@@ -117,7 +117,7 @@ export default function PitchPage() {
   return (
     <div className="lg:flex lg:h-[calc(100vh-4rem)] lg:flex-col lg:overflow-hidden">
       <nav className="text-sm text-muted" aria-label="Breadcrumb">
-        <Link href="/discover" className="hover:text-foreground hover:underline">Find brands</Link>
+        <Link href="/" className="hover:text-foreground hover:underline">Find brands</Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">Pitch {company.name}</span>
       </nav>
@@ -135,8 +135,8 @@ export default function PitchPage() {
               <h2 className="mt-4 text-2xl font-semibold tracking-tight">Sent to {company.name}!</h2>
               <p className="mt-1 text-sm text-muted">We saved it in your History, so you can mark it when they reply.</p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <Link href="/discover" className="btn"><ArrowLeft size={15} /> Back to brands</Link>
-                <Link href="/discover?view=history" className="btn-ghost">Open history</Link>
+                <Link href="/" className="btn"><ArrowLeft size={15} /> Back to brands</Link>
+                <Link href="/?view=history" className="btn-ghost">Open history</Link>
               </div>
               <p className="mt-4 text-xs text-muted">
                 {sent.provider === "mock" ? "Demo mode: no real SMS was sent." : `${sent.testMode ? "Test mode: sent" : "Sent"} to ${sent.to}${sent.channel === "whatsapp" ? " on WhatsApp" : " by SMS"}${sent.testMode ? ", not to the brand." : "."}`}
@@ -286,7 +286,7 @@ export default function PitchPage() {
                 {step > 0 ? (
                   <button type="button" onClick={() => go(step - 1)} className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-foreground"><ArrowLeft size={16} /> Back</button>
                 ) : (
-                  <Link href="/discover" className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-foreground"><ArrowLeft size={16} /> All brands</Link>
+                  <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-foreground"><ArrowLeft size={16} /> All brands</Link>
                 )}
                 <div className="flex items-center gap-3">
                   {savedAt && <span className="hidden items-center gap-1 text-xs text-muted sm:inline-flex"><Check size={13} /> Draft saved</span>}
