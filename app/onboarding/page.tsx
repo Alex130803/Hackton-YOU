@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { DEFAULT_PROFILE, linkList, useProfile } from "@/lib/profile";
+import { OnboardingShapes } from "@/components/OnboardingShapes";
 
 const NICHES = ["Fitness", "Tech", "Beauty", "Food & coffee", "Travel", "Gaming", "Outdoor & hiking", "Finance"];
 
@@ -35,7 +36,8 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative isolate flex min-h-screen flex-col">
+      <OnboardingShapes />
       <header className="flex items-center justify-between px-4 py-4 md:px-8">
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-sm font-bold text-white">C</span>
