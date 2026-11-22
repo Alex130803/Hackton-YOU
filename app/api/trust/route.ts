@@ -24,5 +24,5 @@ export async function POST(req: Request) {
   }
 
   const signals = await collectCompanySignals(company, log);
-  return NextResponse.json<ApiResult<TrustVerdict>>({ data: scoreSignals(signals), calls: log.calls });
+  return NextResponse.json<ApiResult<TrustVerdict>>({ data: scoreSignals(signals, 55), calls: log.calls });
 }

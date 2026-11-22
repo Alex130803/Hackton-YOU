@@ -17,8 +17,13 @@ export const MockProvider: SmsProvider = {
   },
 };
 
-/** SMS_PROVIDER=twilio|infobip picks the real provider; mocks win when USE_MOCKS=true. */
+/**
+ * SMS_PROVIDER=twilio|infobip picks the real provider. Mocks win when USE_MOCKS=true,
+ * and also when the chosen provider has no credentials yet (so live search can run before SMS is set up).
+ */
 export function getSmsProvider(): SmsProvider {
   if (USE_MOCKS) return MockProvider;
-  return process.env.SMS_PROVIDER === "infobip" ? InfobipProvider : TwilioProvider;
+  if (process.env.SMS_PROVIDER === "infobip") return process.env.INFOBIP_API_KEY ? InfobipProvider : MockProvider;
+  const twilioReady = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM;
+  return twilioReady ? TwilioProvider : MockProvider;
 }

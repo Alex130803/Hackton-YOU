@@ -17,7 +17,28 @@ cp .env.example .env.local   # USE_MOCKS=true by default
 npm run dev                  # http://localhost:3000
 ```
 
-With `USE_MOCKS=true` the whole app works end to end with mock data and **no API keys**. Set `USE_MOCKS=false` and fill in `YDC_API_KEY` (plus Twilio vars) to go live.
+With `USE_MOCKS=true` the whole app works end to end with mock data and **no API keys**.
+
+### Going live
+
+Put your own key in `.env.local` (never commit it) and turn mocks off:
+
+```bash
+YDC_API_KEY=ydc-sk-...
+USE_MOCKS=false
+```
+
+Restart `npm run dev` after changing env vars. What runs live then:
+
+| Feature | Live source |
+| --- | --- |
+| Find brands (suggestions and topic search) | Research API with `output_schema` (`research_effort: "standard"`, ~20s), then one Web Search per brand for the cover image (`thumbnail_url`). The logo comes from `you.com/favicon?domain=…` |
+| Pasted company website | Extract (name) + Web Search (latest news from the last 60 days → trigger + image) |
+| Why it fits (brief) | Research API with `output_schema` (why_now / why_you + sources) |
+| Trust check for brands | RDAP domain age + Web Search for independent coverage and scam reports (`lib/trust/signals.ts`, first version) |
+| Offer check | Local red-flag heuristics only. Extract of links, fair rate and Finance Research are still TODO (Person B) |
+| SMS | Twilio when `TWILIO_*` are set, otherwise a safe mock send (nothing goes out) |
+| Message draft | Short template from the sourced trigger (TODO: LLM) |
 
 ## You.com endpoints (verified against https://you.com/docs/llms.txt)
 

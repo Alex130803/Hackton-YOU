@@ -68,23 +68,29 @@ export default function Discover() {
     return v;
   };
 
-  const discover = (force = false) => run("Finding brands for you", async () => {
-    if (!force && cache[niche]) {
-      setCompanies(cache[niche].companies); setVerdicts((p) => ({ ...p, ...cache[niche].verdicts })); setCalls(cache[niche].calls);
+  // What the suggestions are for: the onboarding niche, or a topic the creator searched for.
+  const [topic, setTopic] = useState<string | null>(null);
+  const searchFor = topic ?? niche;
+
+  const discover = (force = false, forTopic = searchFor) => run("Finding brands for you", async () => {
+    if (!force && cache[forTopic]) {
+      setCompanies(cache[forTopic].companies); setVerdicts((p) => ({ ...p, ...cache[forTopic].verdicts })); setCalls(cache[forTopic].calls);
       return;
     }
-    setCalls([]);
-    const r = await postApi<Company[]>("/api/discover", { niche, links: profileLinks(profile) });
+    setCalls([]); setCompanies([]);
+    const r = await postApi<Company[]>("/api/discover", { niche: forTopic, links: profileLinks(profile) });
     log(r.calls); setCompanies(r.data);
     setBusy("Checking each brand");
     const v = await checkTrust(r.data);
-    cache[niche] = { companies: r.data, verdicts: v, calls: [...r.calls] };
+    cache[forTopic] = { companies: r.data, verdicts: v, calls: [...r.calls] };
   });
 
   // Suggestions appear right away, based on the niche from onboarding.
   useEffect(() => {
-    if (loaded && niche) discover();
+    if (loaded && niche && !topic) discover();
   }, [loaded, niche]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const searchTopic = (t: string | null) => { setTopic(t); setQuery(""); discover(false, t ?? niche); };
 
   // Open the pitch page for a company.
   const open = (company: Company, verdict?: TrustVerdict) => {
@@ -197,8 +203,12 @@ export default function Discover() {
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
           <span>For</span>
-          <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">{niche}</span>
-          <Link href="/settings" className="hover:text-foreground hover:underline">Change</Link>
+          <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">{searchFor}</span>
+          {topic ? (
+            <button type="button" onClick={() => searchTopic(null)} disabled={!!busy} className="hover:text-foreground hover:underline disabled:opacity-50">Back to {niche}</button>
+          ) : (
+            <Link href="/settings" className="hover:text-foreground hover:underline">Change</Link>
+          )}
           <span aria-hidden>·</span>
           <button type="button" onClick={() => discover(true)} disabled={!!busy} className="inline-flex items-center gap-1 hover:text-foreground disabled:opacity-50">
             <RotateCw size={12} /> Refresh
@@ -207,27 +217,46 @@ export default function Discover() {
       </div>
 
       {/* Row 2: small search on the left, Filter & sort on the right */}
-      <form className="mt-4 flex flex-wrap items-center justify-between gap-3" onSubmit={(e) => { e.preventDefault(); lookup(); }}>
+      <form
+        className="mt-4 flex flex-wrap items-center justify-between gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (view !== "suggestions") return;
+          if (lookupDomain) lookup();
+          else if (query.trim()) searchTopic(query.trim());
+        }}
+      >
         <label className="relative min-w-0 flex-[1_1_15rem] sm:max-w-md">
-          <span className="sr-only">{view === "suggestions" ? "Company website or search" : "Search your pitches"}</span>
+          <span className="sr-only">{view === "suggestions" ? "Search brands or paste a website" : "Search your pitches"}</span>
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
             {lookupDomain ? <Link2 size={16} className="text-accent" /> : <Search size={16} />}
           </span>
           <input
-            className={`field h-10 pl-9 ${lookupDomain ? "pr-24" : ""}`}
-            placeholder={view === "suggestions" ? "Paste a company website, or search" : "Search your pitches"}
+            className={`field h-10 pl-9 ${view === "suggestions" ? "pr-24" : ""}`}
+            placeholder={view === "suggestions" ? "Search brands or paste a website" : "Search your pitches"}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          {lookupDomain && (
-            <button className="btn absolute right-1 top-1/2 h-8 -translate-y-1/2 px-3 text-xs" disabled={!!busy} title={`Look up ${lookupDomain}`}>
-              Check <ArrowRight size={13} />
+          {view === "suggestions" && (
+            <button
+              className="btn absolute right-1 top-1/2 h-8 -translate-y-1/2 px-3 text-xs"
+              disabled={!!busy || !query.trim()}
+              title={lookupDomain ? `Look up ${lookupDomain}` : "Search for brands"}
+            >
+              {lookupDomain ? <>Check <ArrowRight size={13} /></> : <>Search</>}
             </button>
           )}
         </label>
         <FilterSortMenu sections={sections} activeCount={activeCount} onReset={reset} />
       </form>
-      {lookupDomain && view === "suggestions" && <p className="mt-2 hint">Press Enter to look up <span className="font-medium text-foreground">{lookupDomain}</span> and add it to your list.</p>}
+      {view === "suggestions" && query.trim() && (
+        <p className="mt-2 hint">
+          {lookupDomain
+            ? <>Press Enter to look up <span className="font-medium text-foreground">{lookupDomain}</span> and add it to your list.</>
+            : <>Filtering the list. Press Enter to search for new brands about <span className="font-medium text-foreground">“{query.trim()}”</span>.</>}
+        </p>
+      )}
+      {loadingList && <p className="mt-4 animate-pulse text-sm text-muted">{busy === "Checking each brand" ? "Checking each brand…" : `Finding brands for “${searchFor}”… this can take about 20 seconds.`}</p>}
       {error && <div className="mt-3 flex items-center gap-2 text-sm text-bad"><CircleAlert size={16} /> {error}</div>}
 
       {view === "history" ? (
