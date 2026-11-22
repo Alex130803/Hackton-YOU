@@ -16,19 +16,50 @@ const NAV = [
 const KIND_ICON = { search: ScanSearch, pitch: Send, check: ShieldCheck } as const;
 const TONE = { ok: "bg-ok", warn: "bg-warn", bad: "bg-bad" } as const;
 
+/** Active link: its icon + label glide to the center of the button. Inactive links stay left-aligned. */
 function NavLink({ href, label, icon: Icon, active, linkRef }: { href: string; label: string; icon: typeof House; active: boolean; linkRef?: (el: HTMLAnchorElement | null) => void }) {
+  const ownRef = useRef<HTMLAnchorElement | null>(null);
+  const innerRef = useRef<HTMLSpanElement | null>(null);
+  const [shift, setShift] = useState(0);
+  const [animate, setAnimate] = useState(false);
+
+  useLayoutEffect(() => {
+    const link = ownRef.current, inner = innerRef.current;
+    if (!link || !inner) return;
+    const measure = () => {
+      // offsetLeft/offsetWidth ignore transforms, so this is the distance from the resting spot to the center.
+      const center = (link.clientWidth - inner.offsetWidth) / 2 - inner.offsetLeft;
+      setShift(active ? Math.round(center) : 0);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(link);
+    return () => ro.disconnect();
+  }, [active, label]);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAnimate(true)); // no glide on first paint
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   return (
     <Link
-      ref={linkRef}
+      ref={(el) => { ownRef.current = el; linkRef?.(el); }}
       href={href}
       title={label}
       aria-current={active ? "page" : undefined}
-      className={`relative z-10 flex items-center justify-center gap-3 rounded-xl px-3 py-2.5 text-[15px] transition-colors duration-200 md:justify-start ${
+      className={`relative z-10 flex items-center justify-center rounded-xl px-3 py-2.5 text-[15px] transition-colors duration-200 md:justify-start ${
         active ? "font-medium text-accent" : "text-foreground/75 hover:bg-black/[0.04] hover:text-foreground"
       }`}
     >
-      <Icon size={20} strokeWidth={active ? 2.2 : 1.8} className="shrink-0 transition-[stroke-width] duration-200" />
-      <span className="hidden md:inline">{label}</span>
+      <span
+        ref={innerRef}
+        className={`inline-flex items-center gap-3 ${animate ? "transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none" : ""}`}
+        style={{ transform: `translateX(${shift}px)` }}
+      >
+        <Icon size={20} strokeWidth={active ? 2.2 : 1.8} className="shrink-0" />
+        <span className="hidden whitespace-nowrap md:inline">{label}</span>
+      </span>
     </Link>
   );
 }
