@@ -95,4 +95,7 @@ export interface SendResult {
   ok: boolean;
   provider: "twilio" | "infobip" | "mock";
   id: string;
+  /** The number it actually went to (in test mode this is the test number, not the brand). */
+  to?: string;
+  testMode?: boolean;
 }
