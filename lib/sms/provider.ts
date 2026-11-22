@@ -1,7 +1,7 @@
 // OWNER: Person A
 import type { SendResult } from "@/lib/types";
 import { USE_MOCKS } from "@/lib/env";
-import { TwilioProvider } from "./twilio";
+import { TwilioProvider, messageChannel } from "./twilio";
 import { InfobipProvider } from "./infobip";
 
 export interface SmsProvider {
@@ -24,7 +24,7 @@ export const MockProvider: SmsProvider = {
 export function getSmsProvider(): SmsProvider {
   if (USE_MOCKS) return MockProvider;
   if (process.env.SMS_PROVIDER === "infobip") return process.env.INFOBIP_API_KEY ? InfobipProvider : MockProvider;
-  const whatsapp = process.env.MESSAGE_CHANNEL === "whatsapp"; // WhatsApp doesn't need TWILIO_FROM
+  const whatsapp = messageChannel() === "whatsapp"; // WhatsApp doesn't need TWILIO_FROM
   const twilioReady = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (whatsapp || process.env.TWILIO_FROM);
   return twilioReady ? TwilioProvider : MockProvider;
 }

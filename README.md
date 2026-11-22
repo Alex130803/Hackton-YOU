@@ -41,7 +41,7 @@ Restart `npm run dev` after changing env vars. What runs live then:
 | Trust check for brands | RDAP domain age + Web Search for independent coverage and scam reports (`lib/trust/signals.ts`). Cached per domain for 24h |
 | Offer check | Local red-flag heuristics only. Extract of links, fair rate and Finance Research are still TODO (Person B) |
 | SMS | Twilio when `TWILIO_*` are set, otherwise a safe mock send (nothing goes out). `SMS_TEST_NUMBER` locks every send to one number (your own phone) while testing. US toll-free senders need Twilio toll-free verification first (error 30032 until then) |
-| WhatsApp (testing) | `MESSAGE_CHANNEL=whatsapp` sends through Twilio's WhatsApp Sandbox (+1 415 523 8886). The receiving phone must first send `join <code>` to it from WhatsApp (Twilio Console → Messaging → Try it out → Send a WhatsApp message) |
+| WhatsApp (default) | WhatsApp is the default channel (`MESSAGE_CHANNEL=sms` switches to SMS). It sends through Twilio's WhatsApp Sandbox (+1 415 523 8886). The receiving phone must first send `join <code>` to it from WhatsApp (Twilio Console → Messaging → Try it out → Send a WhatsApp message) |
 | Message draft | Research-written SMS body + the creator's channels appended by the app ("See my work: YouTube: …"). The template is the fallback. You.com's Inference Router (chat models) needs purchased credits, so it isn't used |
 
 ## You.com endpoints (verified against https://you.com/docs/llms.txt)

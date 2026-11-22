@@ -7,7 +7,8 @@ import type { SmsProvider } from "./provider";
  * SMS number waits for toll-free verification). With the WhatsApp Sandbox, the receiving phone must first send
  * "join <your-code>" to the sandbox number (Twilio Console → Messaging → Try it out → Send a WhatsApp message).
  */
-export const messageChannel = (): "sms" | "whatsapp" => (process.env.MESSAGE_CHANNEL === "whatsapp" ? "whatsapp" : "sms");
+// WhatsApp is the default (SMS needs Twilio toll-free verification first); MESSAGE_CHANNEL=sms switches back.
+export const messageChannel = (): "sms" | "whatsapp" => (process.env.MESSAGE_CHANNEL === "sms" ? "sms" : "whatsapp");
 /** Twilio's shared WhatsApp Sandbox number, unless you have your own approved WhatsApp sender. */
 export const whatsappFrom = () => process.env.TWILIO_WHATSAPP_FROM || "+14155238886";
 
