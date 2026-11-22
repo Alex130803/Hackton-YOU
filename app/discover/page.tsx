@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, CircleAlert } from "lucide-react";
 import { postApi } from "@/lib/api";
-import { linkList, useProfile } from "@/lib/profile";
+import { profileLinks, useProfile } from "@/lib/profile";
+import { logActivity } from "@/lib/activity";
 import type { Brief, Company, Draft, EndpointCall, SendResult, TrustVerdict } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { CompanyCard, TRIGGER_LABEL } from "@/components/CompanyCard";
@@ -37,8 +38,9 @@ export default function Discover() {
 
   const discover = () => run("Finding brands", async () => {
     setCalls([]); setSelected(null); setBrief(null); setDraft(null); setVerdicts({}); setSentId(undefined);
-    const r = await postApi<Company[]>("/api/discover", { niche, links: linkList(profile.links) });
+    const r = await postApi<Company[]>("/api/discover", { niche, links: profileLinks(profile) });
     log(r.calls); setCompanies(r.data);
+    logActivity({ kind: "search", title: `Searched “${niche}”`, detail: `${r.data.length} brands`, href: "/discover" });
     setBusy("Checking each brand");
     const results = await Promise.all(r.data.map((company) => postApi<TrustVerdict>("/api/trust", { company })));
     results.forEach((t) => log(t.calls));
@@ -50,13 +52,14 @@ export default function Discover() {
     if (window.innerWidth < 1024) requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     const b = await postApi<Brief>("/api/brief", { company, niche });
     log(b.calls); setBrief(b.data);
-    const d = await postApi<Draft>("/api/draft", { company, brief: b.data, creator: { niche, links: linkList(profile.links) } });
+    const d = await postApi<Draft>("/api/draft", { company, brief: b.data, creator: { niche, links: profileLinks(profile) } });
     setDraft(d.data); setMessage(d.data.message);
   });
 
   const send = (to: string) => run("Sending SMS", async () => {
     const r = await postApi<SendResult>("/api/send", { to, message, approved: true });
     setSentId(`${r.data.provider} · ${r.data.id}`);
+    if (selected) logActivity({ kind: "pitch", title: `Pitched ${selected.name}`, detail: "SMS sent", tone: "ok", href: "/discover" });
   });
 
   const verdict = selected ? verdicts[selected.id] : undefined;

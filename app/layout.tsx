@@ -8,7 +8,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Creator Outreach",
+  title: "Ultraviolet",
   description: "Find brands with a fresh reason to work with you, check offers for scams, and pitch with sources.",
 };
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useProfile, type Profile } from "@/lib/profile";
+import { ChannelsInput } from "@/components/ChannelsInput";
 
 interface Status { mocks: boolean; you: boolean; llm: boolean; sms: boolean; smsProvider: string }
 
@@ -24,18 +25,18 @@ export function SettingsForm({ status }: { status: Status }) {
   const [form, setForm] = useState<Profile>(profile);
   const [saved, setSaved] = useState(false);
   useEffect(() => setForm(profile), [profile]);
-  const set = (k: keyof Profile) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setForm({ ...form, [k]: e.target.value }); setSaved(false); };
+  const set = (k: "name" | "niche" | "phone") => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setForm({ ...form, [k]: e.target.value }); setSaved(false); };
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <form className="card min-w-0 space-y-4 p-6" onSubmit={(e) => { e.preventDefault(); save(form); setSaved(true); }}>
+      <form className="card min-w-0 space-y-4 p-6" onSubmit={(e) => { e.preventDefault(); save({ ...form, extraLinks: form.extraLinks.filter((l) => l.trim()) }); setSaved(true); }}>
         <h2 className="font-medium">Profile</h2>
         <div><label className="label" htmlFor="name">Name</label><input id="name" className="field" value={form.name} onChange={set("name")} /></div>
         <div><label className="label" htmlFor="niche">Niche</label><input id="niche" className="field" value={form.niche} onChange={set("niche")} /></div>
         <div>
-          <label className="label" htmlFor="links">Your channels</label>
-          <textarea id="links" className="field min-h-20 font-mono text-xs" value={form.links} onChange={set("links")} />
-          <div className="mt-1 hint">One link per line. They go into your pitches.</div>
+          <div className="label">Your channels</div>
+          <ChannelsInput channels={form.channels} extraLinks={form.extraLinks} onChange={(channels, extraLinks) => { setForm({ ...form, channels, extraLinks }); setSaved(false); }} />
+          <div className="mt-1 hint">Your handle is enough. These go into your pitches.</div>
         </div>
         <div><label className="label" htmlFor="phone">Default SMS number</label><input id="phone" className="field max-w-60" value={form.phone} onChange={set("phone")} /></div>
         <div className="flex items-center gap-3">

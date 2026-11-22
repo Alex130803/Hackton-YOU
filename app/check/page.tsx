@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ShieldCheck, Copy, Check, CircleAlert } from "lucide-react";
 import { postApi } from "@/lib/api";
 import { mockOffers } from "@/lib/mocks/offers";
+import { logActivity } from "@/lib/activity";
 import type { DealCheck, EndpointCall } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { EndpointTimeline } from "@/components/EndpointTimeline";
@@ -36,6 +37,15 @@ export default function OfferCheck() {
     try {
       const r = await postApi<DealCheck>("/api/inbound", { text });
       setCalls(r.calls); setResult(r.data); setReply(r.data.suggestedReply);
+      const lvl = r.data.verdict.level;
+      const sender = text.match(/(?:from|I'm \w+ from)\s+([A-Z][\w&]*(?:\s+[A-Z][\w&]*){0,2})/)?.[1];
+      logActivity({
+        kind: "check",
+        title: sender ? `Checked ${sender}` : "Checked an offer",
+        detail: lvl === "red" ? "Likely scam" : lvl === "yellow" ? "Check first" : "Looks real",
+        tone: lvl === "red" ? "bad" : lvl === "yellow" ? "warn" : "ok",
+        href: "/check",
+      });
     } catch (e) { setError((e as Error).message); } finally { setBusy(undefined); }
   }
 
