@@ -5,6 +5,7 @@ import { CallLog } from "@/lib/you/client";
 import { collectOfferSignals, extractLinks } from "@/lib/trust/signals";
 import { scoreSignals } from "@/lib/trust/score";
 import { mockOffers } from "@/lib/mocks";
+import { screenshotResultFor } from "@/lib/mocks/screenshots";
 import type { ApiResult, DealCheck } from "@/lib/types";
 
 export async function POST(req: Request) {
@@ -18,8 +19,9 @@ export async function POST(req: Request) {
     log.mock("extract", "open brief link server-side", 610);
     log.mock("research", "fair rate (research_effort=lite)", 2100);
     log.mock("finance_research", "brand earnings leverage", 1800);
-    const known = mockOffers.find((o) => o.text.trim() === text.trim());
-    if (known) return NextResponse.json<ApiResult<DealCheck>>({ data: known.result, calls: log.calls });
+    const known = mockOffers.find((o) => o.text.trim() === text.trim())?.result ?? screenshotResultFor(text);
+    console.log("[inbound] mock", { chars: text.length, known: !!known });
+    if (known) return NextResponse.json<ApiResult<DealCheck>>({ data: known, calls: log.calls });
   }
 
   // Heuristic fallback (also used for pasted text that isn't a mock sample).
