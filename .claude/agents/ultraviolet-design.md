@@ -76,7 +76,7 @@ Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`
 ## 6. Layout
 
 - App shell: `AppShell` renders the `Sidebar` + `<main className="min-w-0 flex-1 px-4 py-6 md:px-10 md:py-8">` + `max-w-5xl` content column. New pages go inside it automatically. Don't add your own sidebar or top nav.
-- Sidebar look: a **floating panel**, detached from the window edges (`m-2 md:m-3`, height `calc(100vh - margins)`), `rounded-2xl`, `bg-sidebar` (ultra light purple), `border-sidebar-line`, and a **purple right edge** (`border-r-2 border-r-accent/60`). The active nav item is a **white pill** that slides between items, and its icon + label glide to the center. Hover on the sidebar is `hover:bg-white/70`.
+- Sidebar look: a **floating panel**, detached from the window edges (`m-2 md:m-3`, height `calc(100vh - margins)`), `rounded-2xl`, `bg-sidebar` (ultra light purple), `border-sidebar-line`, and a **purple right edge** (`border-r-4 border-r-accent/75`). The active nav item is a **white pill** that slides between items, and its icon + label glide to the center. Hover on the sidebar is `hover:bg-white/70`.
 - Sidebar is **one level only**: Home, Find brands, Offer check, then Recent + This week, then Settings + account at the bottom. Never nest sub-menus. New top-level page → add one entry to `NAV` in `components/Sidebar.tsx` with a lucide icon.
 - Spacing: `gap-3/4/6`, sections `space-y-6`, page header `mb-8`, big section break `mt-12`.
 - Radius: `rounded-lg` (8px) for buttons, inputs and small boxes; `rounded-xl` (12px) for cards and pills; `rounded-full` for chips, badges and avatars.
