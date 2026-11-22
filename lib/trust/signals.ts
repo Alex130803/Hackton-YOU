@@ -18,7 +18,10 @@ export interface WeightedSignal extends TrustSignal {
  */
 export async function collectCompanySignals(company: Company, log: CallLog): Promise<WeightedSignal[]> {
   const [domainInfo, coverage, scam] = await Promise.all([
-    lookupDomain(company.domain).catch(() => ({ domain: company.domain }) as Awaited<ReturnType<typeof lookupDomain>>),
+    // RDAP sometimes times out; try twice before giving up.
+    lookupDomain(company.domain)
+      .then((d) => (d.ageDays == null ? lookupDomain(company.domain) : d))
+      .catch(() => ({ domain: company.domain }) as Awaited<ReturnType<typeof lookupDomain>>),
     log.track("search", `"${company.name}" coverage`, () => search({ query: `"${company.name}"`, count: 10, freshness: "year" })).catch(() => null),
     log.track("search", `"${company.name}" scam reports`, () => search({ query: `"${company.name}" scam OR fraud OR fake brand deal`, count: 10 })).catch(() => null),
   ]);
@@ -55,7 +58,8 @@ export async function collectCompanySignals(company: Company, log: CallLog): Pro
     const text = `${h.title} ${h.description ?? ""} ${(h.snippets ?? []).join(" ")}`.toLowerCase();
     return text.includes(company.name.toLowerCase().split(" ")[0]) && /scam|fraud|fake|impersonat|phishing/.test(text);
   });
-  const established = (domainInfo.ageDays ?? 0) > 3 * 365 && sites.size >= 3;
+  // Established = old domain with coverage, or (if the age lookup failed) lots of independent coverage.
+  const established = domainInfo.ageDays == null ? sites.size >= 5 : domainInfo.ageDays > 3 * 365 && sites.size >= 3;
   if (scamHits.length === 0) {
     out.push({ label: "No scam reports", detail: "No results link this brand to scams", weight: 5 });
   } else if (established) {

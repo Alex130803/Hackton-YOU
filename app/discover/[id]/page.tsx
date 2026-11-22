@@ -16,6 +16,7 @@ import { SourceList } from "@/components/SourceList";
 import { Stepper } from "@/components/Stepper";
 import { SmsPhonePreview } from "@/components/SmsPhonePreview";
 import { Slime } from "@/components/Slime";
+import { FavoriteButton } from "@/components/FavoriteButton";
 
 const STEPS = ["Brand", "Why it fits", "Message", "Send"];
 
@@ -119,7 +120,10 @@ export default function PitchPage() {
         <span className="mx-2">/</span>
         <span className="text-foreground">Pitch {company.name}</span>
       </nav>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Pitch {company.name}</h1>
+      <div className="mt-3 flex items-center gap-3">
+        <h1 className="text-3xl font-semibold tracking-tight">Pitch {company.name}</h1>
+        <FavoriteButton company={company} verdict={verdict} variant="inline" />
+      </div>
       <div className="mt-5"><Stepper steps={STEPS} current={sent ? STEPS.length : step} maxReached={sent ? -1 : maxReached} onGo={go} /></div>
 
       <div className="mt-6 grid grid-cols-1 gap-10 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">

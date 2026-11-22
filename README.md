@@ -64,9 +64,7 @@ Each API route returns `{ data, calls }`. `calls` lists which You.com endpoints 
 
 **Design:** white background, black text and inputs, purple (`--accent`) as the only accent color. Tokens live in `app/globals.css`, and the `.card`, `.btn`, `.btn-ghost`, `.field` and `.label` classes are there too. Icons come from `lucide-react`, plain (no tinted tiles).
 
-**Database (only if we need one):** SQLite as a file in this repo (e.g. `data/app.db`), committed to git, so we share data through push/pull and nothing else. Don't use a hosted DB. A `.db` file can't be merged, so only one person writes to it at a time (or rebuild it from a seed script). Mock mode must keep working without it. Right now there is no DB; the profile and activity live in the browser.
-
-**Design agent:** `.claude/agents/ultraviolet-design.md` holds the full design system (colors, components, icons, layout, motion, copy) as a Claude Code subagent. Ask Claude Code to "use the ultraviolet-design agent" when you build or review UI, so both halves look like one app.
+**Database:** SQLite file **`data/ultraviolet.db`**, committed to git, so we share data through push/pull and nothing else. It uses Node's built-in SQLite (`node:sqlite`), so you need **Node 22.5 or newer** and nothing to install. Code: `lib/db.ts` (opens the file, creates tables). Today it holds **favorites** (`/api/favorites`, the heart on brand cards, the Favorites page in the sidebar). A `.db` file can't be merged: before you commit it, pull first, and don't both change favorites at the same time. Profile, activity and pitch history still live in the browser.
 
 **Shared contract:** `lib/types.ts`. Change it together. Mocks live in `lib/mocks/` (all companies are fictional).
 

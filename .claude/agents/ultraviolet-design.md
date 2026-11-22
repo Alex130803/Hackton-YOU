@@ -65,6 +65,7 @@ Defined in `app/globals.css` inside `@layer components` (so Tailwind utilities c
 - **Images**: company images come from the web via You.com (`thumbnail_url` of the news hit → `Company.imageUrl`, `favicon_url` → `Company.logoUrl`). Always render them through `CompanyCover` / `CompanyLogo`, which handle missing or broken images with a calm fallback (lavender + logo or initials). Never show a broken image icon.
 - **Flow page** for acting on one item (e.g. pitching a brand at `/discover/[id]`): breadcrumb → big title (`text-3xl`) → numbered `Stepper` → two columns: the current step on the left, a **live preview on the right** (`SmsPhonePreview`: phone frame, purple header, message bubble on lavender, with a few quiet purple shapes around it). Bottom bar: "Back" text link on the left, `Save draft` (`.btn-ghost`) + `Next` (`.btn`) on the right. The final step has the explicit approve checkbox + Send. On laptops and desktops the whole flow **fits one screen with no page scroll** (page `lg:h-[calc(100vh-4rem)]`; only the step content may scroll inside; the bottom bar always stays visible). Outreach is **SMS only**; don't add channel pickers.
 - **Toolbar** above a list: tabs (segmented control in `bg-subtle` with a white active tab) on the left; on the next row a **small search** (`h-10`, `sm:max-w-md`) on the left and the single **Filter & sort** dropdown (`FilterSortMenu`) on the right, in the same row. Sorting and filtering always go in that one dropdown, never as separate controls.
+- **Favorites**: a heart (`FavoriteButton`) sits in the top-right of every company card (white round button over the image) and next to the title on the pitch page. Filled purple = saved. It saves to the database immediately; never ask for confirmation.
 - **Pages of AI results**: below a results grid, a pager: `Previous` (`.btn-ghost`) on the left, page numbers in the middle (active = `bg-accent-soft text-accent`, then "…"), and on the right `Next page` or, past the last loaded page, `New brands →` (`.btn`), which asks the AI for results not shown yet. When nothing new comes back: "That's all for now. Try another search."
 - **AI-found values** (e.g. a phone number found on the web): prefill the field, and right under it show `Globe` icon + "Found on the web" + a link to the source host in `text-accent`, plus a short caveat in `text-muted`. If the user edits it, offer a one-click way back to the found value. If nothing was found, say so plainly and tell them where to look. Never present a found value without its source.
 
@@ -121,7 +122,7 @@ Small, smooth and purposeful, never flashy:
 ## 10. Data and state (design-relevant)
 
 - No login or signup. Profile lives in `lib/profile.ts` (browser), activity in `lib/activity.ts`. Onboarding opens in every new window.
-- If a database is ever needed: SQLite file in the repo, committed (see README). Don't add a hosted DB.
+- Shared data goes in the SQLite file `data/ultraviolet.db` (committed; see README). Don't add a hosted DB.
 - `USE_MOCKS=true` must keep every screen working with mock data. Mock companies are fictional (`.example` domains). Never put real brand names in mocks.
 
 ## 11. How you work

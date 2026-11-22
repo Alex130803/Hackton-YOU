@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { House, Search, ShieldCheck, Settings, Send, ScanSearch, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { House, Search, ShieldCheck, Settings, Send, ScanSearch, PanelLeftClose, PanelLeftOpen, Heart } from "lucide-react";
 import { useProfile } from "@/lib/profile";
 import { timeAgo, useActivity, type Activity } from "@/lib/activity";
 import { Slime } from "./Slime";
@@ -10,6 +10,7 @@ import { Slime } from "./Slime";
 const NAV = [
   { href: "/", label: "Home", icon: House },
   { href: "/discover", label: "Find brands", icon: Search },
+  { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/check", label: "Offer check", icon: ShieldCheck },
 ];
 
@@ -117,7 +118,7 @@ export function Sidebar({ demo }: { demo: boolean }) {
   const path = usePathname();
   const { profile } = useProfile();
   const activity = useActivity();
-  const isActive = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const isActive = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`));
 
   // Collapsible on desktop (phones always get the narrow icon bar). Remembered per browser.
   const [collapsed, setCollapsed] = useState(false);

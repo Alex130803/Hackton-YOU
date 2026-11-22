@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Company, TrustVerdict } from "@/lib/types";
 import { TrustBadge } from "./TrustBadge";
+import { FavoriteButton } from "./FavoriteButton";
 
 export const TRIGGER_LABEL: Record<Company["trigger"]["type"], string> = {
   launch: "New launch",
@@ -55,9 +56,10 @@ export function CompanyCard({
   company, verdict, verdictLoading, selected, onSelect, tag,
 }: { company: Company; verdict?: TrustVerdict; verdictLoading?: boolean; selected?: boolean; onSelect?: () => void; tag?: React.ReactNode }) {
   return (
+    <div className="relative">
     <button
       onClick={onSelect}
-      className={`card group flex w-full flex-col overflow-hidden text-left transition hover:border-foreground/40 ${selected ? "border-accent! ring-2 ring-accent-soft" : ""}`}
+      className={`card group flex h-full w-full flex-col overflow-hidden text-left transition hover:border-foreground/40 ${selected ? "border-accent! ring-2 ring-accent-soft" : ""}`}
     >
       <div className="relative">
         <CompanyCover company={company} className="aspect-[16/9] w-full" />
@@ -79,5 +81,7 @@ export function CompanyCard({
         {tag && <div className="mt-auto border-t border-sidebar-line pt-2 text-xs text-muted [&:not(:first-child)]:mt-3">{tag}</div>}
       </div>
     </button>
+      <div className="absolute right-3 top-3"><FavoriteButton company={company} verdict={verdict} /></div>
+    </div>
   );
 }
