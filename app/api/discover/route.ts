@@ -20,6 +20,8 @@ export async function POST(req: Request) {
 
   // TODO(Person A): run 3 queries in parallel (launch, funding, marketing hire), map hits -> Company,
   // dedupe by domain, keep only items with page_age in the last ~30 days.
+  // Images: hit.thumbnail_url -> Company.imageUrl (cover), hit.favicon_url -> Company.logoUrl.
+  // If the trigger article has no thumbnail, run search(`"${name}" product`) and take the first thumbnail_url.
   const hits = await log.track("news", `${niche} funding launch hiring`, () => freshNews(`${niche} startup funding OR launch OR hiring marketing`));
   void hits;
   return NextResponse.json<ApiResult<Company[]>>({ data: [], calls: log.calls }, { status: 501 });

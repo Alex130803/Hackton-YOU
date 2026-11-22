@@ -15,6 +15,10 @@ export interface Company {
     date: string; // ISO 8601
   };
   contactHints: string[]; // e.g. "partnerships@acme.com", "Head of Growth: Jane Doe (LinkedIn)"
+  /** Card cover. Live: `thumbnail_url` of the trigger article from You.com Web Search. */
+  imageUrl?: string;
+  /** Small logo. Live: `favicon_url` from You.com results (https://you.com/favicon?domain=…&size=128). */
+  logoUrl?: string;
 }
 
 export type TrustLevel = "green" | "yellow" | "red";

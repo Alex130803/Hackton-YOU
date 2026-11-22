@@ -50,7 +50,7 @@ function NavLink({ href, label, icon: Icon, active, linkRef }: { href: string; l
       title={label}
       aria-current={active ? "page" : undefined}
       className={`relative z-10 flex items-center justify-center rounded-xl px-3 py-2.5 text-[15px] transition-colors duration-200 md:group-data-[wide=true]/sb:justify-start ${
-        active ? "font-medium text-accent" : "text-foreground/75 hover:bg-black/[0.04] hover:text-foreground"
+        active ? "font-medium text-accent" : "text-foreground/75 hover:bg-white/70 hover:text-foreground"
       }`}
     >
       <span
@@ -87,7 +87,7 @@ function NavGroup({ items, isActive }: { items: { href: string; label: string; i
     <div className="relative flex flex-col gap-1.5">
       <span
         aria-hidden
-        className={`absolute inset-x-0 top-0 rounded-xl bg-accent-soft ${animate ? "transition-[transform,height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" : ""}`}
+        className={`absolute inset-x-0 top-0 rounded-xl border border-sidebar-line bg-white ${animate ? "transition-[transform,height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" : ""}`}
         style={{ transform: `translateY(${pill.top}px)`, height: pill.height, opacity: pill.show ? 1 : 0 }}
       />
       {items.map((n) => (
@@ -100,7 +100,7 @@ function NavGroup({ items, isActive }: { items: { href: string; label: string; i
 function RecentItem({ a }: { a: Activity }) {
   const Icon = KIND_ICON[a.kind];
   return (
-    <Link href={a.href} className="group flex items-start gap-2.5 rounded-lg px-3 py-1.5 hover:bg-black/[0.04]">
+    <Link href={a.href} className="group flex items-start gap-2.5 rounded-lg px-3 py-1.5 hover:bg-white/70">
       <Icon size={15} className="mt-0.5 shrink-0 text-muted group-hover:text-foreground" />
       <span className="min-w-0 flex-1">
         <span className="block truncate whitespace-nowrap text-sm text-foreground/85">{a.title}</span>
@@ -151,7 +151,7 @@ export function Sidebar({ demo }: { demo: boolean }) {
   return (
     <aside
       data-wide={!collapsed}
-      className={`group/sb sticky top-0 flex h-screen w-[68px] shrink-0 flex-col overflow-hidden border-r border-line bg-subtle px-2 py-4 data-[wide=true]:md:w-[17rem] data-[wide=true]:md:px-3 ${
+      className={`group/sb sticky top-2 my-2 ml-2 flex h-[calc(100vh-1rem)] w-[68px] shrink-0 flex-col overflow-hidden rounded-2xl border border-sidebar-line border-r-2 border-r-accent/60 bg-sidebar px-2 py-4 md:top-3 md:my-3 md:ml-3 md:h-[calc(100vh-1.5rem)] data-[wide=true]:md:w-[17rem] data-[wide=true]:md:px-3 ${
         animateWidth ? "transition-[width,padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none" : ""
       }`}
     >
@@ -166,7 +166,7 @@ export function Sidebar({ demo }: { demo: boolean }) {
           title={collapsed ? "Expand sidebar (Ctrl/⌘ B)" : "Collapse sidebar (Ctrl/⌘ B)"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!collapsed}
-          className="hidden h-9 w-9 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-black/[0.05] hover:text-foreground md:grid"
+          className="hidden h-9 w-9 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white/70 hover:text-foreground md:grid"
         >
           {collapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
         </button>
@@ -188,7 +188,7 @@ export function Sidebar({ demo }: { demo: boolean }) {
       </div>
 
       <div className="mt-auto flex flex-col gap-1 pt-3">
-        <div className="mb-2 hidden rounded-xl border border-line bg-white p-3 md:group-data-[wide=true]/sb:block">
+        <div className="mb-2 hidden rounded-xl border border-sidebar-line bg-white p-3 md:group-data-[wide=true]/sb:block">
           <div className="text-xs font-medium text-muted">This week</div>
           <dl className="mt-2 grid grid-cols-3 gap-1 text-center">
             {stats.map((s) => (
@@ -201,9 +201,9 @@ export function Sidebar({ demo }: { demo: boolean }) {
           </dl>
         </div>
 
-        <div className="border-t border-line pt-3">
+        <div className="border-t border-sidebar-line pt-3">
           <NavGroup items={[{ href: "/settings", label: "Settings", icon: Settings }]} isActive={isActive} />
-          <Link href="/settings" title={profile.name} className="mt-1 flex items-center justify-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-black/[0.04] md:group-data-[wide=true]/sb:justify-start">
+          <Link href="/settings" title={profile.name} className="mt-1 flex items-center justify-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-white/70 md:group-data-[wide=true]/sb:justify-start">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">{initials}</span>
             <span className="hidden min-w-0 md:group-data-[wide=true]/sb:block">
               <span className="block truncate text-[15px] font-medium">{profile.name}</span>

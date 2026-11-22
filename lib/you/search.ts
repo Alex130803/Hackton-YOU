@@ -16,7 +16,8 @@ export interface SearchHit {
   description?: string;
   snippets?: string[];
   page_age?: string;
-  favicon_url?: string;
+  thumbnail_url?: string; // article/page image -> Company.imageUrl
+  favicon_url?: string; // site icon -> Company.logoUrl
 }
 
 export interface SearchResponse {

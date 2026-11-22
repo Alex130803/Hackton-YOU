@@ -4,6 +4,7 @@ import type { Company } from "@/lib/types";
 export const mockCompanies: Company[] = [
   {
     id: "co_trailpeak",
+    imageUrl: "/mocks/trailpeak.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "TrailPeak Gear",
     domain: "trailpeak.example",
     niche: "outdoor",
@@ -17,6 +18,7 @@ export const mockCompanies: Company[] = [
   },
   {
     id: "co_brewlab",
+    imageUrl: "/mocks/brewlab.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "BrewLab Coffee",
     domain: "brewlab.example",
     niche: "food",
@@ -30,6 +32,7 @@ export const mockCompanies: Company[] = [
   },
   {
     id: "co_pixelforge",
+    imageUrl: "/mocks/pixelforge.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "PixelForge Studio",
     domain: "pixelforge.example",
     niche: "tech",
@@ -43,6 +46,7 @@ export const mockCompanies: Company[] = [
   },
   {
     id: "co_glowdrop",
+    imageUrl: "/mocks/glowdrop.svg", // demo illustration; live = thumbnail_url from You.com search
     name: "GlowDrop Skincare",
     domain: "glowdrop-official.example",
     niche: "beauty",

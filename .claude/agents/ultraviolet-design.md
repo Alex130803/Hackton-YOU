@@ -20,11 +20,12 @@ All colors are defined in `app/globals.css` and used through Tailwind names:
 | --- | --- | --- |
 | `--background` #ffffff | `bg-background` | page background (always white) |
 | `--foreground` #0a0a0a | `text-foreground`, `bg-foreground` | text, primary buttons, focused input border |
-| `--subtle` #fafafa | `bg-subtle` | sidebar background, very light fills |
+| `--subtle` #fafafa | `bg-subtle` | very light fills (skeletons, tab bar, code/message boxes) |
+| `--sidebar` #f8f5ff / `--sidebar-line` #ebe4fb | `bg-sidebar`, `border-sidebar-line` | **sidebar only**: ultra light purple panel and its inner dividers |
 | `--line` #e7e7e9 | `border-line` | all borders and dividers |
 | `--muted` #6b6b73 | `text-muted` | secondary text, hints, timestamps |
 | `--accent` #6d28d9 | `text-accent`, `bg-accent` | **the only accent**: active nav, links on hover, chosen chip, progress bar, avatar |
-| `--accent-soft` #f4f0fe | `bg-accent-soft` | active nav pill, selected chip, info notes, focus ring |
+| `--accent-soft` #f4f0fe | `bg-accent-soft` | selected chip, info notes, focus ring, image fallback behind a logo |
 | `--ok` / `--ok-soft` | `text-ok`, `bg-ok-soft` | "Verified", success, "Sent" |
 | `--warn` / `--warn-soft` | `text-warn`, `bg-warn-soft` | "Check first", caution |
 | `--bad` / `--bad-soft` | `text-bad`, `bg-bad-soft` | "Likely scam", errors |
@@ -58,7 +59,12 @@ Defined in `app/globals.css` inside `@layer components` (so Tailwind utilities c
 - Empty state: `rounded-xl border border-dashed border-line p-10 text-center text-sm text-muted` and one sentence telling the user what to do.
 - Loading: short text such as "Researching the brand…" with `animate-pulse text-sm text-muted`. No spinners all over the place.
 
-Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`, `CompanyCard`, `SourceList`, `DraftEditor`, `EndpointTimeline` (the "You.com calls" card, required on screens that call You.com), `ChannelsInput`, `PlatformIcon`, `Slime`, `Sidebar`, `AppShell`, `OnboardingShapes`.
+- **Marketplace card** (`CompanyCard`): cover image on top (`aspect-[16/9]`), logo overlapping the bottom-left of the cover (`CompanyLogo`, white rounded box), then name, domain, trust badge, reason + date, 2-line summary, optional footer tag. Lists of companies are a **grid of these cards** (`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4`), not a plain list.
+- **Images**: company images come from the web via You.com (`thumbnail_url` of the news hit → `Company.imageUrl`, `favicon_url` → `Company.logoUrl`). Always render them through `CompanyCover` / `CompanyLogo`, which handle missing or broken images with a calm fallback (lavender + logo or initials). Never show a broken image icon.
+- **Side panel** for details: clicking a card opens a panel that slides in from the right (`max-w-xl`, full width on phones, `bg-black/20` backdrop, Esc and backdrop click close it, body scroll locked). Use this instead of navigating away or showing details under the list.
+- **Toolbar** above a list: tabs (segmented control in `bg-subtle` with a white active tab) on the left; on the next row a **small search** (`h-10`, `sm:max-w-md`) on the left and the single **Filter & sort** dropdown (`FilterSortMenu`) on the right, in the same row. Sorting and filtering always go in that one dropdown, never as separate controls.
+
+Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`, `CompanyCard`, `CompanyCover`, `CompanyLogo`, `FilterSortMenu`, `PitchHistory`, `SourceList`, `DraftEditor`, `EndpointTimeline` (the "You.com calls" card, required on screens that call You.com), `ChannelsInput`, `PlatformIcon`, `Slime`, `Sidebar`, `AppShell`, `OnboardingShapes`.
 
 ## 5. Icons
 
@@ -70,6 +76,7 @@ Existing components to reuse before writing new ones: `PageHeader`, `TrustBadge`
 ## 6. Layout
 
 - App shell: `AppShell` renders the `Sidebar` + `<main className="min-w-0 flex-1 px-4 py-6 md:px-10 md:py-8">` + `max-w-5xl` content column. New pages go inside it automatically. Don't add your own sidebar or top nav.
+- Sidebar look: a **floating panel**, detached from the window edges (`m-2 md:m-3`, height `calc(100vh - margins)`), `rounded-2xl`, `bg-sidebar` (ultra light purple), `border-sidebar-line`, and a **purple right edge** (`border-r-2 border-r-accent/60`). The active nav item is a **white pill** that slides between items, and its icon + label glide to the center. Hover on the sidebar is `hover:bg-white/70`.
 - Sidebar is **one level only**: Home, Find brands, Offer check, then Recent + This week, then Settings + account at the bottom. Never nest sub-menus. New top-level page → add one entry to `NAV` in `components/Sidebar.tsx` with a lucide icon.
 - Spacing: `gap-3/4/6`, sections `space-y-6`, page header `mb-8`, big section break `mt-12`.
 - Radius: `rounded-lg` (8px) for buttons, inputs and small boxes; `rounded-xl` (12px) for cards and pills; `rounded-full` for chips, badges and avatars.

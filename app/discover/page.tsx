@@ -3,7 +3,7 @@
 // brief + draft + send, and the history of sent pitches with their status.
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Link2, CircleAlert, ArrowRight, RotateCw } from "lucide-react";
+import { Search, Link2, CircleAlert, ArrowRight, RotateCw, X } from "lucide-react";
 import { postApi } from "@/lib/api";
 import { profileLinks, useProfile } from "@/lib/profile";
 import { logActivity, timeAgo } from "@/lib/activity";
@@ -11,7 +11,7 @@ import { toDomain } from "@/lib/domain";
 import { PITCH_STATUS, PITCH_STATUS_ORDER, recordPitch, usePitches, type Pitch } from "@/lib/pitches";
 import type { Brief, Company, Draft, EndpointCall, SendResult, TriggerType, TrustLevel, TrustVerdict } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
-import { CompanyCard, TRIGGER_LABEL } from "@/components/CompanyCard";
+import { CompanyCard, CompanyCover, CompanyLogo, TRIGGER_LABEL } from "@/components/CompanyCard";
 import { EndpointTimeline } from "@/components/EndpointTimeline";
 import { SourceList } from "@/components/SourceList";
 import { DraftEditor } from "@/components/DraftEditor";
@@ -54,7 +54,7 @@ export default function Discover() {
   const [hSort, setHSort] = useState<HistorySort>("newest");
   const [statusF, setStatusF] = useState<string[]>([]);
 
-  const detailRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const log = (c: EndpointCall[]) => setCalls((prev) => [...prev, ...c]);
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(label); setError(undefined);
@@ -89,7 +89,6 @@ export default function Discover() {
 
   const pick = (company: Company) => run(`Researching ${company.name}`, async () => {
     setSelected(company); setBrief(null); setDraft(null); setSentId(undefined);
-    if (window.innerWidth < 1024) requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     const b = await postApi<Brief>("/api/brief", { company, niche });
     log(b.calls); setBrief(b.data);
     const d = await postApi<Draft>("/api/draft", { company, brief: b.data, creator: { niche, links: profileLinks(profile) } });
@@ -151,6 +150,7 @@ export default function Discover() {
     });
 
   const historyVisible = pitches
+    .filter((p) => !textQuery || `${p.company.name} ${p.company.domain}`.toLowerCase().includes(textQuery))
     .filter((p) => statusF.length === 0 || statusF.includes(p.status))
     .sort((a, b) =>
       hSort === "oldest" ? a.sentAt - b.sentAt
@@ -184,47 +184,30 @@ export default function Discover() {
     : (hSort !== "newest" ? 1 : 0) + statusF.length;
   const reset = () => (view === "suggestions" ? (setSort("recommended"), setTrustF([]), setReasonF([])) : (setHSort("newest"), setStatusF([])));
 
-  const verdict = selected ? verdicts[selected.id] : undefined;
-  const selectedPitch = selected ? lastPitch[selected.id] : undefined;
+  // Side panel keeps showing the last company while it slides out.
+  const [shown, setShown] = useState<Company | null>(null);
+  useEffect(() => { if (selected) setShown(selected); }, [selected]);
+  const close = () => setSelected(null);
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    panelRef.current?.scrollTo({ top: 0 });
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [selected]);
+
+  const verdict = shown ? verdicts[shown.id] : undefined;
+  const shownPitch = shown ? lastPitch[shown.id] : undefined;
   const loadingList = busy === "Finding brands for you" || busy === "Checking each brand";
 
   return (
     <>
-      <PageHeader title="Find brands" description="Brands that fit your niche and have a fresh reason to work with creators. Want a specific company? Paste its website." />
+      <PageHeader title="Find brands" description="Brands in your niche with a fresh reason to work with creators. Paste a company's website to pitch a specific one." />
 
-      {/* Search: paste a company link (main use) or filter the list */}
-      <form className="card p-3" onSubmit={(e) => { e.preventDefault(); lookup(); }}>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="relative min-w-0 flex-[1_1_16rem]">
-            <span className="sr-only">Company website or search</span>
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
-              {lookupDomain ? <Link2 size={18} className="text-accent" /> : <Search size={18} />}
-            </span>
-            <input
-              className="field h-11 pl-10 text-[15px]"
-              placeholder="Paste a company website, e.g. acme.com, or search the list"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
-          <button className="btn h-11" disabled={!lookupDomain || !!busy}>
-            {lookupDomain ? <>Check {lookupDomain} <ArrowRight size={15} /></> : <>Look up company</>}
-          </button>
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs text-muted">
-          <span>Suggestions for</span>
-          <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">{niche}</span>
-          <Link href="/settings" className="hover:text-foreground hover:underline">Change</Link>
-          <span aria-hidden>·</span>
-          <button type="button" onClick={() => discover(true)} disabled={!!busy} className="inline-flex items-center gap-1 hover:text-foreground disabled:opacity-50">
-            <RotateCw size={12} /> Refresh
-          </button>
-        </div>
-      </form>
-      {error && <div className="mt-3 flex items-center gap-2 text-sm text-bad"><CircleAlert size={16} /> {error}</div>}
-
-      {/* Tabs + one Filter & sort dropdown */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      {/* Row 1: tabs + what the suggestions are based on */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div role="tablist" className="inline-flex rounded-xl border border-line bg-subtle p-1">
           {(["suggestions", "history"] as View[]).map((v) => (
             <button
@@ -239,21 +222,49 @@ export default function Discover() {
             </button>
           ))}
         </div>
-        <FilterSortMenu sections={sections} activeCount={activeCount} onReset={reset} />
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+          <span>For</span>
+          <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">{niche}</span>
+          <Link href="/settings" className="hover:text-foreground hover:underline">Change</Link>
+          <span aria-hidden>·</span>
+          <button type="button" onClick={() => discover(true)} disabled={!!busy} className="inline-flex items-center gap-1 hover:text-foreground disabled:opacity-50">
+            <RotateCw size={12} /> Refresh
+          </button>
+        </div>
       </div>
 
+      {/* Row 2: small search on the left, Filter & sort on the right */}
+      <form className="mt-4 flex flex-wrap items-center justify-between gap-3" onSubmit={(e) => { e.preventDefault(); lookup(); }}>
+        <label className="relative min-w-0 flex-[1_1_15rem] sm:max-w-md">
+          <span className="sr-only">{view === "suggestions" ? "Company website or search" : "Search your pitches"}</span>
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+            {lookupDomain ? <Link2 size={16} className="text-accent" /> : <Search size={16} />}
+          </span>
+          <input
+            className={`field h-10 pl-9 ${lookupDomain ? "pr-24" : ""}`}
+            placeholder={view === "suggestions" ? "Paste a company website, or search" : "Search your pitches"}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {lookupDomain && (
+            <button className="btn absolute right-1 top-1/2 h-8 -translate-y-1/2 px-3 text-xs" disabled={!!busy} title={`Look up ${lookupDomain}`}>
+              Check <ArrowRight size={13} />
+            </button>
+          )}
+        </label>
+        <FilterSortMenu sections={sections} activeCount={activeCount} onReset={reset} />
+      </form>
+      {lookupDomain && view === "suggestions" && <p className="mt-2 hint">Press Enter to look up <span className="font-medium text-foreground">{lookupDomain}</span> and add it to your list.</p>}
+      {error && <div className="mt-3 flex items-center gap-2 text-sm text-bad"><CircleAlert size={16} /> {error}</div>}
+
       {view === "history" ? (
-        <div className="mt-4"><PitchHistory pitches={historyVisible} total={pitches} /></div>
+        <div className="mt-5"><PitchHistory pitches={historyVisible} total={pitches} /></div>
       ) : (
-        <div className="mt-4 grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
-            {loadingList && all.length === 0 && [0, 1, 2].map((i) => <div key={i} className="card h-28 animate-pulse bg-subtle" />)}
-            {!loadingList && all.length === 0 && (
-              <div className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">No brands yet. Try Refresh, or paste a company website above.</div>
-            )}
-            {all.length > 0 && visible.length === 0 && (
-              <div className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">No brands match. Clear the search or reset the filters.</div>
-            )}
+        <>
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {loadingList && all.length === 0 && [0, 1, 2].map((i) => (
+              <div key={i} className="card overflow-hidden"><div className="aspect-[16/9] animate-pulse bg-subtle" /><div className="space-y-2 p-4"><div className="h-4 w-2/3 animate-pulse rounded bg-subtle" /><div className="h-3 w-1/2 animate-pulse rounded bg-subtle" /></div></div>
+            ))}
             {visible.map((c) => {
               const p = lastPitch[c.id];
               const tag = p ? <>Pitched {timeAgo(p.sentAt)} · <span className="font-medium text-foreground">{PITCH_STATUS[p.status].label}</span></>
@@ -261,24 +272,49 @@ export default function Discover() {
               return <CompanyCard key={c.id} company={c} verdict={verdicts[c.id]} verdictLoading={!verdicts[c.id]} selected={selected?.id === c.id} onSelect={() => pick(c)} tag={tag} />;
             })}
           </div>
+          {!loadingList && all.length === 0 && (
+            <div className="mt-5 rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">No brands yet. Try Refresh, or paste a company website above.</div>
+          )}
+          {all.length > 0 && visible.length === 0 && (
+            <div className="mt-5 rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">No brands match. Clear the search or reset the filters.</div>
+          )}
+          <div className="mt-8 max-w-xl"><EndpointTimeline calls={calls} busy={busy} /></div>
+        </>
+      )}
 
-          <div ref={detailRef} className="min-w-0 scroll-mt-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            {!selected ? (
-              <div className="card grid h-full min-h-64 place-items-center p-10 text-center text-sm text-muted">Pick a brand on the left to see why it&apos;s a good fit and get a ready-to-send pitch.</div>
-            ) : (
-              <div className="card space-y-6 p-6">
+      {/* Brand details: side panel that slides in from the right */}
+      <div className={`fixed inset-0 z-40 ${selected ? "" : "pointer-events-none"}`} aria-hidden={!selected}>
+        <div onClick={close} className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${selected ? "opacity-100" : "opacity-0"}`} />
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={shown ? `${shown.name} details` : "Brand details"}
+          className={`absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-line bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${selected ? "translate-x-0" : "translate-x-full"}`}
+        >
+          {shown && (
+            <>
+              <div className="relative">
+                <CompanyCover company={shown} className="aspect-[16/7] w-full" />
+                <button type="button" onClick={close} aria-label="Close" className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-line bg-white text-foreground hover:border-foreground">
+                  <X size={17} />
+                </button>
+                <div className="absolute -bottom-6 left-6"><CompanyLogo company={shown} size={52} /></div>
+              </div>
+
+              <div className="space-y-6 p-6 pt-9">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="text-xl font-semibold">{selected.name}</h2>
-                    <div className="text-sm text-muted">{selected.domain} · {TRIGGER_LABEL[selected.trigger.type]} · {selected.trigger.date}</div>
+                    <h2 className="text-xl font-semibold">{shown.name}</h2>
+                    <div className="text-sm text-muted">{shown.domain} · {TRIGGER_LABEL[shown.trigger.type]} · {shown.trigger.date}</div>
                   </div>
                   <TrustBadge verdict={verdict} loading={!verdict} />
                 </div>
 
-                {selectedPitch && (
+                {shownPitch && (
                   <div className="flex flex-wrap items-center gap-2 rounded-lg bg-accent-soft p-3 text-sm text-accent">
-                    You pitched them {timeAgo(selectedPitch.sentAt)}. Status: <span className="font-medium">{PITCH_STATUS[selectedPitch.status].label}</span>.
-                    <button type="button" onClick={() => setView("history")} className="font-medium underline">Open history</button>
+                    You pitched them {timeAgo(shownPitch.sentAt)}. Status: <span className="font-medium">{PITCH_STATUS[shownPitch.status].label}</span>.
+                    <button type="button" onClick={() => { close(); setView("history"); }} className="font-medium underline">Open history</button>
                   </div>
                 )}
 
@@ -289,31 +325,29 @@ export default function Discover() {
                   </div>
                 )}
 
-                {!brief ? (
+                {!brief || brief.companyId !== shown.id ? (
                   <div className="animate-pulse text-sm text-muted">Researching the brand…</div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div><div className="text-xs font-medium text-muted">Why now</div><p className="mt-1 text-sm">{brief.whyNow}</p></div>
                     <div><div className="text-xs font-medium text-muted">Why you</div><p className="mt-1 text-sm">{brief.creatorFit || "We'll explain the fit once live research is connected."}</p></div>
-                    <div className="md:col-span-2"><SourceList sources={brief.sources} /></div>
+                    <div className="sm:col-span-2"><SourceList sources={brief.sources} /></div>
                   </div>
                 )}
 
-                {draft && (
+                {draft && draft.companyId === shown.id && (
                   <div className="space-y-4 border-t border-line pt-6">
-                    <DraftEditor key={selected.id} value={message} onChange={setMessage} onSend={send} defaultTo={profile.phone} sending={busy === "Sending SMS"} sentId={sentId} disabled={verdict?.level === "red"} />
-                    <div className="text-xs text-muted">Contact hints: {selected.contactHints.join(" · ")}</div>
+                    <DraftEditor key={shown.id} value={message} onChange={setMessage} onSend={send} defaultTo={profile.phone} sending={busy === "Sending SMS"} sentId={sentId} disabled={verdict?.level === "red"} />
+                    <div className="text-xs text-muted">Contact hints: {shown.contactHints.join(" · ")}</div>
                   </div>
                 )}
-              </div>
-            )}
-          </div>
 
-          <div className="min-w-0 lg:col-start-1 lg:row-start-2">
-            <EndpointTimeline calls={calls} busy={busy} />
-          </div>
+                <EndpointTimeline calls={calls} busy={busy} />
+              </div>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </>
   );
 }
