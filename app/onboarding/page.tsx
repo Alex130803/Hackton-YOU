@@ -1,10 +1,10 @@
 "use client";
 // Simple 3-step onboarding shown before the main screens (no account needed), then an "all set" overview.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Search, ShieldCheck, Phone, Pencil } from "lucide-react";
-import { DEFAULT_PROFILE, EMPTY_CHANNELS, PLATFORMS, channelUrl, profileLinks, useProfile, type Profile } from "@/lib/profile";
+import { DEFAULT_PROFILE, EMPTY_CHANNELS, PLATFORMS, channelUrl, profileLinks, setWindowOnboarded, useProfile, type Profile } from "@/lib/profile";
 import { OnboardingShapes } from "@/components/OnboardingShapes";
 import { ChannelsInput } from "@/components/ChannelsInput";
 import { PlatformIcon } from "@/components/PlatformIcon";
@@ -14,7 +14,7 @@ const NICHES = ["Fitness", "Tech", "Beauty", "Food & coffee", "Travel", "Gaming"
 
 export default function Onboarding() {
   const router = useRouter();
-  const { save } = useProfile();
+  const { profile: saved, save, loaded } = useProfile();
   const [step, setStep] = useState(0);
   const [done, setDone] = useState<Profile | null>(null);
   const [name, setName] = useState("");
@@ -22,6 +22,17 @@ export default function Onboarding() {
   const [channels, setChannels] = useState({ ...EMPTY_CHANNELS });
   const [extraLinks, setExtraLinks] = useState<string[]>([]);
   const [phone, setPhone] = useState("");
+  const returning = loaded && saved.onboarded;
+
+  // Returning creator: prefill with what they entered last time, so it's just a quick confirm.
+  useEffect(() => {
+    if (!loaded || !saved.onboarded) return;
+    setName(saved.name);
+    setNiche(saved.niche);
+    setChannels({ ...saved.channels });
+    setExtraLinks([...saved.extraLinks]);
+    setPhone(saved.phone === DEFAULT_PROFILE.phone ? "" : saved.phone);
+  }, [loaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const draft: Profile = { name: name.trim(), niche: niche.trim(), channels, extraLinks: extraLinks.filter((l) => l.trim()), phone: phone.trim() || DEFAULT_PROFILE.phone, onboarded: true };
 
@@ -35,6 +46,7 @@ export default function Onboarding() {
 
   const finish = (p: Profile) => {
     save({ ...p, onboarded: true });
+    setWindowOnboarded(true);
     setDone({ ...p, onboarded: true });
   };
   const next = () => {
@@ -52,7 +64,7 @@ export default function Onboarding() {
           <span className="font-semibold tracking-tight">Ultraviolet</span>
         </div>
         {!done && (
-          <button className="text-sm text-muted hover:text-foreground" onClick={() => finish({ ...DEFAULT_PROFILE })}>
+          <button className="text-sm text-muted hover:text-foreground" onClick={() => { const p = returning ? saved : { ...DEFAULT_PROFILE }; save({ ...p, onboarded: true }); setWindowOnboarded(true); router.replace("/"); }}>
             Skip for now
           </button>
         )}
@@ -68,6 +80,9 @@ export default function Onboarding() {
                 <span key={i} className={`h-1 flex-1 rounded-full transition ${i <= step ? "bg-accent" : "bg-line"}`} />
               ))}
             </div>
+            {returning && step === 0 && (
+              <div className="mb-4 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent">Welcome back! Your details are filled in, just check and continue.</div>
+            )}
             <div className="text-sm text-muted">Step {step + 1} of {steps.length}</div>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight">{current.title}</h1>
             <p className="mt-1 text-sm text-muted">{current.hint}</p>

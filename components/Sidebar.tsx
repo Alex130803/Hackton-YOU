@@ -23,11 +23,11 @@ function NavLink({ href, label, icon: Icon, active, linkRef }: { href: string; l
       href={href}
       title={label}
       aria-current={active ? "page" : undefined}
-      className={`relative z-10 flex items-center justify-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-200 md:justify-start ${
+      className={`relative z-10 flex items-center justify-center gap-3 rounded-xl px-3 py-2.5 text-[15px] transition-colors duration-200 md:justify-start ${
         active ? "font-medium text-accent" : "text-foreground/75 hover:bg-black/[0.04] hover:text-foreground"
       }`}
     >
-      <Icon size={18} strokeWidth={active ? 2.2 : 1.8} className="shrink-0 transition-[stroke-width] duration-200" />
+      <Icon size={20} strokeWidth={active ? 2.2 : 1.8} className="shrink-0 transition-[stroke-width] duration-200" />
       <span className="hidden md:inline">{label}</span>
     </Link>
   );
@@ -52,10 +52,10 @@ function NavGroup({ items, isActive }: { items: { href: string; label: string; i
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="relative flex flex-col gap-1">
+    <div className="relative flex flex-col gap-1.5">
       <span
         aria-hidden
-        className={`absolute inset-x-0 top-0 rounded-lg bg-accent-soft ${animate ? "transition-[transform,height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" : ""}`}
+        className={`absolute inset-x-0 top-0 rounded-xl bg-accent-soft ${animate ? "transition-[transform,height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" : ""}`}
         style={{ transform: `translateY(${pill.top}px)`, height: pill.height, opacity: pill.show ? 1 : 0 }}
       />
       {items.map((n) => (
@@ -69,10 +69,10 @@ function RecentItem({ a }: { a: Activity }) {
   const Icon = KIND_ICON[a.kind];
   return (
     <Link href={a.href} className="group flex items-start gap-2.5 rounded-lg px-3 py-1.5 hover:bg-black/[0.04]">
-      <Icon size={14} className="mt-0.5 shrink-0 text-muted group-hover:text-foreground" />
+      <Icon size={15} className="mt-0.5 shrink-0 text-muted group-hover:text-foreground" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] text-foreground/85">{a.title}</span>
-        <span className="flex items-center gap-1.5 text-[11px] text-muted">
+        <span className="block truncate text-sm text-foreground/85">{a.title}</span>
+        <span className="flex items-center gap-1.5 text-xs text-muted">
           {a.tone && <span className={`h-1.5 w-1.5 rounded-full ${TONE[a.tone]}`} />}
           {a.detail ? `${a.detail} · ` : ""}{timeAgo(a.at)}
         </span>
@@ -97,10 +97,10 @@ export function Sidebar({ demo }: { demo: boolean }) {
   ];
 
   return (
-    <aside className="sticky top-0 flex h-screen w-16 shrink-0 flex-col border-r border-line bg-subtle px-2 py-4 md:w-64 md:px-3">
+    <aside className="sticky top-0 flex h-screen w-[68px] shrink-0 flex-col border-r border-line bg-subtle px-2 py-4 md:w-[17rem] md:px-3">
       <Link href="/" className="mb-6 flex items-center justify-center gap-2 px-1.5 md:justify-start">
-        <Slime size={34} blink />
-        <span className="hidden text-[15px] font-semibold tracking-tight md:inline">Ultraviolet</span>
+        <Slime size={38} blink />
+        <span className="hidden text-base font-semibold tracking-tight md:inline">Ultraviolet</span>
       </Link>
 
       <nav>
@@ -135,9 +135,9 @@ export function Sidebar({ demo }: { demo: boolean }) {
         <div className="border-t border-line pt-3">
           <NavGroup items={[{ href: "/settings", label: "Settings", icon: Settings }]} isActive={isActive} />
           <Link href="/settings" title={profile.name} className="mt-1 flex items-center justify-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-black/[0.04] md:justify-start">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-white">{initials}</span>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">{initials}</span>
             <span className="hidden min-w-0 md:block">
-              <span className="block truncate text-sm font-medium">{profile.name}</span>
+              <span className="block truncate text-[15px] font-medium">{profile.name}</span>
               <span className="block truncate text-xs text-muted">{profile.niche}{demo ? " · Demo" : ""}</span>
             </span>
           </Link>

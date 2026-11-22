@@ -95,3 +95,21 @@ export function useProfile() {
 
   return { profile, save, loaded };
 }
+
+// ---- Per-window onboarding ----
+// sessionStorage is scoped to one tab/window: a reload keeps it, a new window starts empty,
+// so onboarding opens again every time the app is opened in a new window.
+const SESSION_KEY = "creator-outreach.onboarded-this-window";
+let sessionMemory = false;
+
+export function isWindowOnboarded(): boolean {
+  try { return sessionStorage.getItem(SESSION_KEY) === "1"; } catch { return sessionMemory; }
+}
+
+export function setWindowOnboarded(value: boolean) {
+  sessionMemory = value;
+  try {
+    if (value) sessionStorage.setItem(SESSION_KEY, "1");
+    else sessionStorage.removeItem(SESSION_KEY);
+  } catch {}
+}

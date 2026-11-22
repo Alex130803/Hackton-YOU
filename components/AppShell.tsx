@@ -1,22 +1,24 @@
 "use client";
-// Shows onboarding first for new users; everything else gets the sidebar layout.
-import { useEffect } from "react";
+// Shows onboarding first in every new browser window; everything else gets the sidebar layout.
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useProfile } from "@/lib/profile";
+import { isWindowOnboarded } from "@/lib/profile";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell({ demo, children }: { demo: boolean; children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
-  const { profile, loaded } = useProfile();
+  const [ready, setReady] = useState<boolean | null>(null); // null = not checked yet
   const onOnboarding = path === "/onboarding";
 
   useEffect(() => {
-    if (loaded && !profile.onboarded && !onOnboarding) router.replace("/onboarding");
-  }, [loaded, profile.onboarded, onOnboarding, router]);
+    const ok = isWindowOnboarded();
+    setReady(ok);
+    if (!ok && !onOnboarding) router.replace("/onboarding");
+  }, [path, onOnboarding, router]);
 
   if (onOnboarding) return <>{children}</>;
-  if (!loaded || !profile.onboarded) return <div className="min-h-screen" />; // avoid flashing the app before redirect
+  if (!ready) return <div className="min-h-screen" />; // avoid flashing the app before redirect
 
   return (
     <div className="flex min-h-screen">

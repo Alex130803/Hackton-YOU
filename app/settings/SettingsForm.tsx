@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { useProfile, type Profile } from "@/lib/profile";
+import { setWindowOnboarded, useProfile, type Profile } from "@/lib/profile";
 import { ChannelsInput } from "@/components/ChannelsInput";
 
 interface Status { mocks: boolean; you: boolean; llm: boolean; sms: boolean; smsProvider: string }
@@ -55,7 +55,7 @@ export function SettingsForm({ status }: { status: Status }) {
         </div>
         <p className="mt-3 hint">Keys go in <code>.env.local</code> on the server.</p>
         <div className="mt-6 border-t border-line pt-4">
-          <button type="button" className="btn-ghost" onClick={() => { save({ ...profile, onboarded: false }); router.replace("/onboarding"); }}>
+          <button type="button" className="btn-ghost" onClick={() => { setWindowOnboarded(false); router.replace("/onboarding"); }}>
             Restart onboarding
           </button>
           <p className="mt-1 hint">Handy before a demo.</p>
