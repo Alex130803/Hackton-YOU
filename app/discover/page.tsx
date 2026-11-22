@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Link2, CircleAlert, ArrowRight, RotateCw } from "lucide-react";
+import { Search, Link2, CircleAlert, ArrowLeft, ArrowRight, RotateCw } from "lucide-react";
 import { postApi } from "@/lib/api";
 import { profileLinks, useProfile } from "@/lib/profile";
 import { logActivity, timeAgo } from "@/lib/activity";
@@ -22,7 +22,8 @@ type SortKey = "recommended" | "newest" | "trust" | "name";
 type HistorySort = "newest" | "oldest" | "status";
 
 // Keep suggestions per niche while the tab is open, so coming back to this page doesn't search again.
-const cache: Record<string, { companies: Company[]; verdicts: Record<string, TrustVerdict>; calls: EndpointCall[] }> = {};
+// Each topic keeps its pages of suggestions; every new page holds brands the creator hasn't seen yet.
+const cache: Record<string, { pages: Company[][]; noMore: boolean; verdicts: Record<string, TrustVerdict>; calls: EndpointCall[] }> = {};
 let addedCache: Company[] = []; // companies the creator looked up by link
 
 const TRUST_LABEL: Record<TrustLevel, string> = { green: "Verified", yellow: "Check first", red: "Likely scam" };
@@ -35,7 +36,10 @@ export default function Discover() {
 
   const [view, setView] = useState<View>("suggestions");
   const [query, setQuery] = useState("");
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [pages, setPages] = useState<Company[][]>([]);
+  const [page, setPage] = useState(0);
+  const [noMore, setNoMore] = useState(false);
+  const companies = pages[page] ?? [];
   const [added, setAddedState] = useState<Company[]>(addedCache);
   const setAdded = (fn: (prev: Company[]) => Company[]) => setAddedState((prev) => (addedCache = fn(prev)));
   const [verdicts, setVerdicts] = useState<Record<string, TrustVerdict>>({});
@@ -73,17 +77,40 @@ export default function Discover() {
   const searchFor = topic ?? niche;
 
   const discover = (force = false, forTopic = searchFor) => run("Finding brands for you", async () => {
+    setPage(0);
     if (!force && cache[forTopic]) {
-      setCompanies(cache[forTopic].companies); setVerdicts((p) => ({ ...p, ...cache[forTopic].verdicts })); setCalls(cache[forTopic].calls);
+      setPages(cache[forTopic].pages); setNoMore(cache[forTopic].noMore);
+      setVerdicts((p) => ({ ...p, ...cache[forTopic].verdicts })); setCalls(cache[forTopic].calls);
       return;
     }
-    setCalls([]); setCompanies([]);
+    setCalls([]); setPages([]); setNoMore(false);
     const r = await postApi<Company[]>("/api/discover", { niche: forTopic, links: profileLinks(profile) });
-    log(r.calls); setCompanies(r.data);
+    log(r.calls); setPages([r.data]);
     setBusy("Checking each brand");
     const v = await checkTrust(r.data);
-    cache[forTopic] = { companies: r.data, verdicts: v, calls: [...r.calls] };
+    cache[forTopic] = { pages: [r.data], noMore: false, verdicts: v, calls: [...r.calls] };
   });
+
+  // Next page: already loaded -> just show it; otherwise ask for NEW brands (skipping everything shown so far).
+  const goToPage = (n: number) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (pages[n]) { setPage(n); return; }
+    run("Finding more brands", async () => {
+      const exclude = [...pages.flat(), ...added].map((c) => c.domain);
+      const r = await postApi<Company[]>("/api/discover", { niche: searchFor, links: profileLinks(profile), exclude });
+      log(r.calls);
+      if (r.data.length === 0) {
+        setNoMore(true);
+        if (cache[searchFor]) cache[searchFor].noMore = true;
+        return;
+      }
+      const next = [...pages, r.data];
+      setPages(next); setPage(n);
+      setBusy("Checking each brand");
+      const v = await checkTrust(r.data);
+      cache[searchFor] = { pages: next, noMore: false, verdicts: { ...(cache[searchFor]?.verdicts ?? {}), ...v }, calls: cache[searchFor]?.calls ?? [] };
+    });
+  };
 
   // Suggestions appear right away, based on the niche from onboarding.
   useEffect(() => {
@@ -101,7 +128,7 @@ export default function Discover() {
   const lookupDomain = toDomain(query);
   const lookup = async () => {
     if (!lookupDomain) return;
-    const existing = [...added, ...companies].find((c) => c.domain === lookupDomain);
+    const existing = [...added, ...pages.flat()].find((c) => c.domain === lookupDomain);
     setView("suggestions");
     if (existing) { setQuery(""); open(existing); return; }
     let found: Company | undefined;
@@ -126,7 +153,9 @@ export default function Discover() {
   }, [pitches]);
 
   const addedIds = new Set(added.map((c) => c.id));
-  const all = [...added, ...companies.filter((c) => !addedIds.has(c.id))];
+  // Your lookups show at the top of the first page.
+  const all = [...(page === 0 ? added : []), ...companies.filter((c) => !addedIds.has(c.id))];
+  const loadedCount = added.length + pages.flat().filter((c) => !addedIds.has(c.id)).length;
   const textQuery = lookupDomain ? "" : query.trim().toLowerCase();
   const visible = all
     .filter((c) => !textQuery || `${c.name} ${c.domain} ${c.trigger.summary}`.toLowerCase().includes(textQuery))
@@ -179,7 +208,7 @@ export default function Discover() {
     : (hSort !== "newest" ? 1 : 0) + statusF.length;
   const reset = () => (view === "suggestions" ? (setSort("recommended"), setTrustF([]), setReasonF([])) : (setHSort("newest"), setStatusF([])));
 
-  const loadingList = busy === "Finding brands for you" || busy === "Checking each brand";
+  const loadingList = busy === "Finding brands for you" || busy === "Finding more brands" || busy === "Checking each brand";
 
   return (
     <>
@@ -197,7 +226,7 @@ export default function Discover() {
               className={`rounded-lg px-3.5 py-1.5 text-sm transition-colors ${view === v ? "border border-line bg-white font-medium text-foreground" : "border border-transparent text-muted hover:text-foreground"}`}
             >
               {v === "suggestions" ? "Suggestions" : "History"}
-              <span className="ml-1.5 text-xs text-muted">{v === "suggestions" ? all.length : pitches.length}</span>
+              <span className="ml-1.5 text-xs text-muted">{v === "suggestions" ? loadedCount : pitches.length}</span>
             </button>
           ))}
         </div>
@@ -256,7 +285,7 @@ export default function Discover() {
             : <>Filtering the list. Press Enter to search for new brands about <span className="font-medium text-foreground">“{query.trim()}”</span>.</>}
         </p>
       )}
-      {loadingList && <p className="mt-4 animate-pulse text-sm text-muted">{busy === "Checking each brand" ? "Checking each brand…" : `Finding brands for “${searchFor}”… this can take about 20 seconds.`}</p>}
+      {loadingList && <p className="mt-4 animate-pulse text-sm text-muted">{busy === "Checking each brand" ? "Checking each brand…" : busy === "Finding more brands" ? "Finding brands you haven’t seen yet… about 20 seconds." : `Finding brands for “${searchFor}”… this can take about 20 seconds.`}</p>}
       {error && <div className="mt-3 flex items-center gap-2 text-sm text-bad"><CircleAlert size={16} /> {error}</div>}
 
       {view === "history" ? (
@@ -280,6 +309,39 @@ export default function Discover() {
           )}
           {all.length > 0 && visible.length === 0 && (
             <div className="mt-5 rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">No brands match. Clear the search or reset the filters.</div>
+          )}
+
+          {/* Pages: going past the last loaded page asks the AI for new brands */}
+          {pages.length > 0 && (
+            <nav aria-label="Suggestion pages" className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
+              <button type="button" className="btn-ghost" disabled={page === 0 || !!busy} onClick={() => goToPage(page - 1)}>
+                <ArrowLeft size={15} /> Previous
+              </button>
+              <div className="flex items-center gap-1.5">
+                {pages.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => goToPage(i)}
+                    disabled={!!busy}
+                    aria-current={i === page ? "page" : undefined}
+                    className={`grid h-9 min-w-9 place-items-center rounded-lg px-2 text-sm transition-colors ${i === page ? "bg-accent-soft font-medium text-accent" : "text-muted hover:bg-subtle hover:text-foreground"}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                {!noMore && <span className="px-1 text-sm text-muted">…</span>}
+              </div>
+              {page < pages.length - 1 ? (
+                <button type="button" className="btn" disabled={!!busy} onClick={() => goToPage(page + 1)}>Next page <ArrowRight size={15} /></button>
+              ) : noMore ? (
+                <span className="text-sm text-muted">That&apos;s all for now. Try another search.</span>
+              ) : (
+                <button type="button" className="btn" disabled={!!busy} onClick={() => goToPage(page + 1)}>
+                  {busy === "Finding more brands" ? "Finding new brands…" : <>New brands <ArrowRight size={15} /></>}
+                </button>
+              )}
+            </nav>
           )}
         </>
       )}

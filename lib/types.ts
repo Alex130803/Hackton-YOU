@@ -40,6 +40,10 @@ export interface Brief {
   whyNow: string;
   creatorFit: string;
   sources: { title: string; url: string }[];
+  /** Public business contact found on the web (live: You.com Research), with where it was found. */
+  contact?: { phone: string | null; email: string | null; sourceUrl: string | null };
+  /** Short SMS body written by research from sourced facts (no links; the app appends the creator's links). */
+  suggestedMessage?: string;
 }
 
 export interface Draft {

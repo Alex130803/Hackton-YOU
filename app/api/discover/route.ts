@@ -5,7 +5,7 @@ import { CallLog } from "@/lib/you/client";
 import { researchStructured } from "@/lib/you/research";
 import { coverFor, logoFor } from "@/lib/live/images";
 import { toDomain } from "@/lib/domain";
-import { mockCompanies } from "@/lib/mocks";
+import { mockCompanies, mockCompaniesMore } from "@/lib/mocks";
 import type { ApiResult, Company, TriggerType } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -40,14 +40,16 @@ const SCHEMA = {
 const NOT_A_BRAND = /(gearjunkie|prnewswire|businesswire|globenewswire|techcrunch|outdoorindustry|forbes|reuters|bloomberg|linkedin|indeed|amazon|wikipedia|youtube|instagram|tiktok|medium)\./i;
 
 export async function POST(req: Request) {
-  const { niche = "" } = (await req.json()) as { niche?: string };
+  // `exclude`: domains already shown on earlier pages, so every page brings new brands.
+  const { niche = "", exclude = [] } = (await req.json()) as { niche?: string; exclude?: string[] };
   const log = new CallLog();
 
   if (USE_MOCKS) {
     await sleep(500);
     log.mock("search", `"${niche}" launches / funding / marketing hires`, 420);
     log.mock("news", "freshness=week", 380);
-    const data = mockCompanies.map((c) => ({ ...c, niche: niche || c.niche }));
+    const pool = exclude.length ? mockCompaniesMore : mockCompanies;
+    const data = pool.filter((c) => !exclude.includes(c.domain)).map((c) => ({ ...c, niche: niche || c.niche }));
     return NextResponse.json<ApiResult<Company[]>>({ data, calls: log.calls });
   }
 
@@ -58,7 +60,8 @@ export async function POST(req: Request) {
         `Find 6 real brands in the niche "${niche}" that in the last 60 days (today is ${today}) launched a new product, raised funding, ` +
           `or posted a job for influencer or creator marketing. They should be brands a content creator could pitch for a paid collaboration. ` +
           `For each give the brand's own official website domain (not a news site or marketplace), the trigger type, one plain sentence about what happened, ` +
-          `the URL of the article or page that reports it, and the date (YYYY-MM-DD).`,
+          `the URL of the article or page that reports it, and the date (YYYY-MM-DD).` +
+          (exclude.length ? ` Do not include any of these brands, they were already suggested: ${exclude.join(", ")}.` : ""),
         SCHEMA,
       ),
     );
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
     const found = (content.companies ?? [])
       .map((f) => ({ ...f, domain: toDomain(f.domain) ?? "" }))
       .filter((f) => {
-        if (!f.domain || NOT_A_BRAND.test(f.domain) || seen.has(f.domain)) return false;
+        if (!f.domain || NOT_A_BRAND.test(f.domain) || seen.has(f.domain) || exclude.includes(f.domain)) return false;
         seen.add(f.domain);
         return true;
       });

@@ -34,11 +34,12 @@ Restart `npm run dev` after changing env vars. What runs live then:
 | --- | --- |
 | Find brands (suggestions and topic search) | Research API with `output_schema` (`research_effort: "standard"`, ~20s), then one Web Search per brand for the cover image (`thumbnail_url`). The logo comes from `you.com/favicon?domain=…` |
 | Pasted company website | Extract (name) + Web Search (latest news from the last 60 days → trigger + image) |
-| Why it fits (brief) | Research API with `output_schema` (why_now / why_you + sources) |
+| Why it fits (brief) | Research API with `output_schema`: why_now / why_you + sources, **plus the brand's public phone/email with the page it was found on, and a short SMS body** (one call, ~20–30s) |
+| More suggestions | "New brands" in the pager asks Research again with `exclude` (domains already shown), so every page is new |
 | Trust check for brands | RDAP domain age + Web Search for independent coverage and scam reports (`lib/trust/signals.ts`, first version) |
 | Offer check | Local red-flag heuristics only. Extract of links, fair rate and Finance Research are still TODO (Person B) |
 | SMS | Twilio when `TWILIO_*` are set, otherwise a safe mock send (nothing goes out) |
-| Message draft | Short template from the sourced trigger (TODO: LLM) |
+| Message draft | Research-written SMS body + the creator's channels appended by the app ("See my work: YouTube: …"). The template is the fallback. You.com's Inference Router (chat models) needs purchased credits, so it isn't used |
 
 ## You.com endpoints (verified against https://you.com/docs/llms.txt)
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, CircleAlert, ExternalLink, RotateCcw, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, ExternalLink, Globe, Mail, RotateCcw, Send } from "lucide-react";
 import { postApi } from "@/lib/api";
 import { profileLinks, useProfile } from "@/lib/profile";
 import { logActivity } from "@/lib/activity";
@@ -18,6 +18,8 @@ import { SmsPhonePreview } from "@/components/SmsPhonePreview";
 import { Slime } from "@/components/Slime";
 
 const STEPS = ["Brand", "Why it fits", "Message", "Send"];
+
+const hostOf = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } };
 
 export default function PitchPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,9 +50,8 @@ export default function PitchPage() {
     if (!hit) { router.replace("/discover"); return; }
     const c = hit.company;
     setCompany(c);
-    setTo(profile.phone);
     const draft = findDraft(c.id);
-    if (draft) { setMessage(draft.message); setTo(draft.to || profile.phone); setSavedAt(draft.updatedAt); }
+    if (draft) { setMessage(draft.message); setTo(draft.to); setSavedAt(draft.updatedAt); }
 
     (async () => {
       try {
@@ -64,6 +65,8 @@ export default function PitchPage() {
         setBusy("Researching the brand");
         const b = await postApi<Brief>("/api/brief", { company: c, niche: profile.niche, links: profileLinks(profile) });
         log(b.calls); setBrief(b.data);
+        // The brand's public number, found on the web by research (only if the creator hasn't typed one).
+        if (b.data.contact?.phone) setTo((cur) => cur || b.data.contact!.phone!);
         const d = await postApi<Draft>("/api/draft", { company: c, brief: b.data, creator: { niche: profile.niche, links: profileLinks(profile) } });
         setSuggested(d.data.message);
         if (!draft) setMessage(d.data.message);
@@ -219,7 +222,26 @@ export default function PitchPage() {
                     <div>
                       <label className="label" htmlFor="to">Send to</label>
                       <input id="to" className="field max-w-xs" value={to} onChange={(e) => setTo(e.target.value)} placeholder="+1 555 000 0000" />
-                      <p className="mt-1 hint">The brand&apos;s phone number. {company.contactHints[0] ? `Hint: ${company.contactHints[0]}` : ""}</p>
+                      {!brief ? (
+                        <p className="mt-1.5 animate-pulse hint">Looking for {company.name}&apos;s phone number on the web…</p>
+                      ) : brief.contact?.phone && to === brief.contact.phone ? (
+                        <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm text-accent">
+                          <Globe size={14} /> Found on the web
+                          {brief.contact.sourceUrl && (
+                            <a href={brief.contact.sourceUrl} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 underline">
+                              {hostOf(brief.contact.sourceUrl)} <ExternalLink size={11} />
+                            </a>
+                          )}
+                          <span className="text-muted">· it&apos;s their public business line, so check it can get texts</span>
+                        </p>
+                      ) : brief.contact?.phone ? (
+                        <p className="mt-1.5 hint">You changed it. The number we found was <button type="button" onClick={() => setTo(brief.contact!.phone!)} className="font-medium text-accent underline">{brief.contact.phone}</button>.</p>
+                      ) : (
+                        <p className="mt-1.5 hint">We couldn&apos;t find a public phone number for {company.name}. Check their contact page.</p>
+                      )}
+                      {brief?.contact?.email && (
+                        <p className="mt-1 flex items-center gap-1.5 text-sm text-muted"><Mail size={14} /> They also list <a href={`mailto:${brief.contact.email}`} className="font-medium text-foreground underline">{brief.contact.email}</a></p>
+                      )}
                     </div>
                     <div className="card p-4 text-sm">
                       <div className="flex justify-between gap-3"><span className="text-muted">To</span><span className="font-medium">{company.name} · {to || "no number yet"}</span></div>
